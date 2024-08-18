@@ -1,0 +1,7 @@
+*.exe
+*.out
+.vscode/
+build/
+test
+test.c
+sys
