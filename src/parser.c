@@ -27,6 +27,7 @@ struct command* separate_commands(char* input) {
             *r = '\0';
             r++;
             commands = realloc(commands, (i+1) * sizeof(struct command));
+            int frgfdj = strlen(l);
             commands[i].string = (char*) malloc(strlen(l) + 1);
             strcpy(commands[i].string, l);
             commands[i].background = false;
@@ -49,7 +50,10 @@ struct command* separate_commands(char* input) {
             }
             else break;
         }
-        else printf("\nWhy are we here?\n");
+        else {
+            printf("\nWhy are we here?\n");
+            exit(1);
+        }
     }
     // i++;
     commands = realloc(commands, sizeof(struct command*) * (i+1));
@@ -79,8 +83,8 @@ char** get_args(char* input, bool background) {
     }
     if(background) {
         args = realloc(args, sizeof(char*) * (i + 1));
-        args[i] = (char*) malloc(sizeof(char) * 4);
-        strcpy(args[i], "-bg");
+        args[i] = (char*) malloc(sizeof(char) * 2);
+        strcpy(args[i], "&"); // based on what exec() calls assume background
         // arg = __strtok_r(NULL, " ", &saveptr);
         i++;
     }
