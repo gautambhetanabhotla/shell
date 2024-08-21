@@ -47,16 +47,17 @@ struct command* separate_commands(char* input) {
                 commands[i].string = (char*) malloc(strlen(l) + 1);
                 strcpy(commands[i].string, l);
                 commands[i].background = false;
+                i++;
             }
             else break;
         }
         else {
-            printf("\nWhy are we here?\n");
+            fprintf(stderr, "\nWhy are we here?\n");
             exit(1);
         }
     }
     // i++;
-    commands = realloc(commands, sizeof(struct command*) * (i+1));
+    commands = realloc(commands, sizeof(struct command*) * (i));
     commands[i].string = NULL;
 
     #ifdef DEBUG
@@ -68,7 +69,7 @@ struct command* separate_commands(char* input) {
 }
 
 char** get_args(char* input, bool background) {
-    char* Input = (char*) malloc(strlen(input) + 1);
+    char* Input = (char*) malloc((strlen(input) + 1) * sizeof(char));
     strcpy(Input, input);
     char* saveptr;
     char** args = NULL;
