@@ -1,14 +1,19 @@
 #include "prompt.h"
 #include "parser.h"
+#include "hop.h"
 
 #include <linux/limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <wait.h>
 
 char *HOME_DIRECTORY = NULL, *USERNAME = NULL, *HOSTNAME = NULL, *CURRENT_DIRECTORY = NULL;
-int (*Functions[])(char**) = {};
+int (*USER_FUNCTIONS[])(char**) = {hop, NULL};
+char* COMMAND_STRINGS[] = {"hop", "exit", NULL};
+
+char* CURRENT_DIRECTORY_CONVERTED = NULL;
 
 char* convert_path(char* input_string, char* home_dir, bool free_input) {
     // Converts a general path to one relative to the home directory.
@@ -28,30 +33,32 @@ char* convert_path(char* input_string, char* home_dir, bool free_input) {
 }
 
 void prompt() {
-	printf("\e[0;31m%s@%s:%s\e[0;37m ", USERNAME, HOSTNAME, CURRENT_DIRECTORY);
-    char query[1025] = {'\0'};
+	printf("\e[0;31m%s@%s:%s\e[0;37m ", USERNAME, HOSTNAME, CURRENT_DIRECTORY_CONVERTED);
+    char* query = malloc(1025);
     fgets(query, 1024, stdin);
     query[strlen(query) - 1] = '\0';
+    #ifdef DEBUG
+        printf("QUERY: %s\n", query);
+    #endif
     struct command* commands = separate_commands(query);
     int i = 0;
     while(commands[i].string) {
         char** args = get_args(commands[i].string, commands[i].background);
+        execute(args);
         i++;
     }
-}
-
-char* current_directory() {
-    char* result = calloc(PATH_MAX, sizeof(char));
-    getcwd(result, PATH_MAX);
-    return convert_path(result, HOME_DIRECTORY, true); // this needs to be freed later by caller.
+    // free(query);
 }
 
 void init_sysvars() {
     // Initialise the shell's home directory to the current working directory
     HOME_DIRECTORY = calloc(PATH_MAX, sizeof(char));
     CURRENT_DIRECTORY = calloc(PATH_MAX, sizeof(char));
+    LAST_DIRECTORY = calloc(PATH_MAX, sizeof(char));
     getcwd(HOME_DIRECTORY, PATH_MAX);
-    CURRENT_DIRECTORY = current_directory();
+    getcwd(CURRENT_DIRECTORY, PATH_MAX);
+    getcwd(LAST_DIRECTORY, PATH_MAX);
+    CURRENT_DIRECTORY_CONVERTED = convert_path(CURRENT_DIRECTORY, HOME_DIRECTORY, false);
 
     USERNAME = calloc(257, sizeof(char));
     getlogin_r(USERNAME, 256);
@@ -61,5 +68,28 @@ void init_sysvars() {
 }
 
 void execute(char** args) {
-
+    for(int i = 0; COMMAND_STRINGS[i]; i++) {
+        if(strcmp(args[0], COMMAND_STRINGS[i]) == 0) {
+            if(strcmp(args[0], "exit") == 0) exit(0);
+            if(USER_FUNCTIONS[i](args) != 0) fprintf(stderr, "Error executing %s\n", COMMAND_STRINGS[i]);
+            return;
+        }
+    }
+    int rc2 = fork();
+    if(rc2 > 0) {
+        int i = 0;
+        while(args[i]) i++;
+        int stat;
+        if(strcmp(args[i-1], "&") != 0) waitpid(rc2, &stat, WUNTRACED);
+    }
+    else if(rc2 == 0) {
+        if(execvp(args[0], args) != 0) {
+            fprintf(stderr, "Error executing system command %s.\n", args[0]);
+            exit(1);
+        }
+    }
+    else {
+        fprintf(stderr, "Error forking.\n");
+        return;
+    }
 }
