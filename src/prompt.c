@@ -11,7 +11,7 @@
 #include <wait.h>
 
 char *HOME_DIRECTORY = NULL, *USERNAME = NULL, *HOSTNAME = NULL, *CURRENT_DIRECTORY = NULL;
-int (*USER_FUNCTIONS[])(char**) = {hop, exit_shell, output_log, NULL};
+int (*USER_FUNCTIONS[])(char**) = {hop, exit_shell, Log, NULL};
 char* COMMAND_STRINGS[] = {"hop", "exit", "log", NULL};
 
 char* CURRENT_DIRECTORY_CONVERTED = NULL;

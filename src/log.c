@@ -1,5 +1,6 @@
 #include "log.h"
 #include "prompt.h"
+#include "parser.h"
 
 #include <stdio.h>
 #include <linux/limits.h>
@@ -42,11 +43,13 @@ int save_log() {
     strcpy(log_path + strlen(HOME_DIRECTORY), "/log.txt");
     FILE* log_f = fopen(log_path, "w");
     if(log_f != NULL) {
-        int n = 15;
-        for(int i = COMMAND_HEAD; n; (i++ && n--)) {
+        int n = 14;
+        for(int i = COMMAND_HEAD; n; ((i = (i+1) % 15) && n--)) {
+            if(i == 15) continue;
             if(PAST_COMMANDS[i] == NULL) break;
             fprintf(log_f, "%s\n", PAST_COMMANDS[i]);
         }
+        fclose(log_f);
     }
     else return -1;
     return 0;
@@ -68,13 +71,20 @@ int purge_log() {
 int add_to_log(char* query) {
     for(int i = 0; i < 15; i++) {
         if(PAST_COMMANDS[i] == NULL) {
-            PAST_COMMANDS[i] = malloc(MAX_COMMAND_LENGTH + 1);
-            strcpy(PAST_COMMANDS[i], query);
+            if(i > 0 && PAST_COMMANDS[i-1] != NULL && strcmp(PAST_COMMANDS[i-1], query) == 0) {
+                // if the command matches last command
+            }
+            else {
+                PAST_COMMANDS[i] = malloc(MAX_COMMAND_LENGTH + 1);
+                strcpy(PAST_COMMANDS[i], query);
+            }
             return 0;
         }
     }
-    strcpy(PAST_COMMANDS[COMMAND_HEAD], query);
-    COMMAND_HEAD = (COMMAND_HEAD + 1) % 15;
+    if(strcmp(PAST_COMMANDS[((COMMAND_HEAD - 1) % 15) >= 0 ? ((COMMAND_HEAD - 1) % 15) : (((COMMAND_HEAD - 1) % 15) + 15)], PAST_COMMANDS[COMMAND_HEAD]) != 0) {
+        strcpy(PAST_COMMANDS[COMMAND_HEAD], query);
+        COMMAND_HEAD = (COMMAND_HEAD + 1) % 15;
+    }
     return 0;
 }
 
@@ -83,6 +93,37 @@ int output_log() {
     for(int i = COMMAND_HEAD; n; (i++ && n--)) {
         if(PAST_COMMANDS[i] == NULL) break;
         printf("%s\n", PAST_COMMANDS[i]);
+    }
+    return 0;
+}
+
+int Log(char** args) {
+    if(args == NULL) return -1;
+    if(args[1] == NULL) {
+        output_log();
+    }
+    else if(strcmp(args[1], "purge") == 0) {
+        purge_log();
+    }
+    else if(strcmp(args[1], "execute") == 0) {
+        if(args[2] == NULL) {
+            fprintf(stderr, "ERROR: Index not provided.\n");
+            return -1;
+        }
+        else {
+            int index = atoi(args[2]);
+            char query[MAX_COMMAND_LENGTH + 2];
+            strcpy(query, PAST_COMMANDS[(COMMAND_HEAD - index) % 15]);
+
+            struct command* commands = separate_commands(query);
+            if(strstr(query, "log") == NULL) add_to_log(query);
+            int i = 0;
+            while(commands[i].string) {
+                char** args = get_args(commands[i].string, commands[i].background);
+                execute(args);
+                i++;
+            }
+        }
     }
     return 0;
 }
