@@ -1,6 +1,7 @@
 #include "prompt.h"
 #include "parser.h"
 #include "hop.h"
+#include "log.h"
 
 #include <linux/limits.h>
 #include <stdlib.h>
@@ -10,14 +11,14 @@
 #include <wait.h>
 
 char *HOME_DIRECTORY = NULL, *USERNAME = NULL, *HOSTNAME = NULL, *CURRENT_DIRECTORY = NULL;
-int (*USER_FUNCTIONS[])(char**) = {hop, NULL};
-char* COMMAND_STRINGS[] = {"hop", "exit", NULL};
+int (*USER_FUNCTIONS[])(char**) = {hop, exit_shell, output_log, NULL};
+char* COMMAND_STRINGS[] = {"hop", "exit", "log", NULL};
 
 char* CURRENT_DIRECTORY_CONVERTED = NULL;
 
 char* convert_path(char* input_string, char* home_dir, bool free_input) {
     // Converts a general path to one relative to the home directory.
-    char* result = calloc(PATH_MAX, sizeof(char));
+    char* result = (char*) malloc((strlen(input_string) + 1) * sizeof(char));
     if(strcmp(input_string, home_dir) == 0) {
         strcpy(result, "~");
     }
@@ -34,13 +35,14 @@ char* convert_path(char* input_string, char* home_dir, bool free_input) {
 
 void prompt() {
 	printf("\e[0;31m%s@%s:%s\e[0;37m ", USERNAME, HOSTNAME, CURRENT_DIRECTORY_CONVERTED);
-    char* query = malloc(1025);
-    fgets(query, 1024, stdin);
+    char* query = malloc(MAX_COMMAND_LENGTH + 2);
+    fgets(query, MAX_COMMAND_LENGTH + 1, stdin);
     query[strlen(query) - 1] = '\0';
     #ifdef DEBUG
         printf("QUERY: %s\n", query);
     #endif
     struct command* commands = separate_commands(query);
+    if(strstr(query, "log") == NULL) add_to_log(query);
     int i = 0;
     while(commands[i].string) {
         char** args = get_args(commands[i].string, commands[i].background);
@@ -50,15 +52,19 @@ void prompt() {
     // free(query);
 }
 
-void init_sysvars() {
+void init_shell() {
     // Initialise the shell's home directory to the current working directory
     HOME_DIRECTORY = calloc(PATH_MAX, sizeof(char));
     CURRENT_DIRECTORY = calloc(PATH_MAX, sizeof(char));
     LAST_DIRECTORY = calloc(PATH_MAX, sizeof(char));
+
     getcwd(HOME_DIRECTORY, PATH_MAX);
     getcwd(CURRENT_DIRECTORY, PATH_MAX);
     getcwd(LAST_DIRECTORY, PATH_MAX);
+
     CURRENT_DIRECTORY_CONVERTED = convert_path(CURRENT_DIRECTORY, HOME_DIRECTORY, false);
+
+    init_log();
 
     USERNAME = calloc(257, sizeof(char));
     getlogin_r(USERNAME, 256);
@@ -67,11 +73,21 @@ void init_sysvars() {
     gethostname(HOSTNAME, 253);
 }
 
+int exit_shell(char** args) {
+    save_log();
+    free(HOME_DIRECTORY);
+    free(CURRENT_DIRECTORY);
+    free(CURRENT_DIRECTORY_CONVERTED);
+    free(USERNAME);
+    free(HOSTNAME);
+    exit(0);
+}
+
 void execute(char** args) {
     for(int i = 0; COMMAND_STRINGS[i]; i++) {
         if(strcmp(args[0], COMMAND_STRINGS[i]) == 0) {
-            if(strcmp(args[0], "exit") == 0) exit(0);
-            if(USER_FUNCTIONS[i](args) != 0) fprintf(stderr, "Error executing %s\n", COMMAND_STRINGS[i]);
+            int rc = USER_FUNCTIONS[i](args);
+            if(rc) fprintf(stderr, "%s exited with status %d\n", COMMAND_STRINGS[i], rc);
             return;
         }
     }
@@ -84,12 +100,12 @@ void execute(char** args) {
     }
     else if(rc2 == 0) {
         if(execvp(args[0], args) != 0) {
-            fprintf(stderr, "Error executing system command %s.\n", args[0]);
+            fprintf(stderr, "ERROR: Invalid system command \"%s\".\n", args[0]);
             exit(1);
         }
     }
     else {
-        fprintf(stderr, "Error forking.\n");
+        fprintf(stderr, "ERROR: Could not execute command.\n");
         return;
     }
 }

@@ -5,8 +5,8 @@ default: build a.out
 build:
 	@mkdir build
 
-shell: $(objects) main.c
-	@gcc -g main.c $^
+a.out: $(objects) main.c
+	@gcc -g $^
 
 build/%.o: src/%.c
 	@gcc -c -g -o $@ $<

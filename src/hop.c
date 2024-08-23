@@ -46,6 +46,8 @@ int hop(char** args) {
     int rc = 0;
     if(!args[1]) {
         rc = chdir(HOME_DIRECTORY);
+        getcwd(CURRENT_DIRECTORY, PATH_MAX);
+        printf("%s\n", CURRENT_DIRECTORY);
     }
     else {
         for(int i = 1; args[i]; i++) {
@@ -56,9 +58,21 @@ int hop(char** args) {
                 return 1;
             }
             rc = chdir(path);
+            getcwd(CURRENT_DIRECTORY, PATH_MAX);
+            printf("%s\n", CURRENT_DIRECTORY);
             free(path);
             if(rc) {
-                fprintf(stderr, "Error in chdir() call. Errno: %d\n", errno);
+                switch(errno) {
+                    case EACCES:
+                        fprintf(stderr, "ERROR: Permission denied!\n");
+                        break;
+                    case ENOENT:
+                        fprintf(stderr, "ERROR: Path does not exist!\n");
+                        break;
+                    default:
+                        fprintf(stderr, "ERROR: Generic");
+                        break;
+                }
                 break;
             }
         }
