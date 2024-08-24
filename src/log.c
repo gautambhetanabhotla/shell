@@ -89,8 +89,8 @@ int add_to_log(char* query) {
 }
 
 int output_log() {
-    int n = 15;
-    for(int i = COMMAND_HEAD; n; (i++ && n--)) {
+    int n = 14;
+    for(int i = COMMAND_HEAD; n; ((i = (i+1) % 15) && n--)) {
         if(PAST_COMMANDS[i] == NULL) break;
         printf("%s\n", PAST_COMMANDS[i]);
     }
@@ -112,12 +112,19 @@ int Log(char** args) {
         }
         else {
             int index = atoi(args[2]);
+            int indexTBE = ((COMMAND_HEAD - index) % 15) >= 0 ? ((COMMAND_HEAD - index) % 15) : (((COMMAND_HEAD - index) % 15) + 15);
+            int i, j = 0;
+            for(i = 0; i < 15; i++) if(PAST_COMMANDS[i] == NULL) {
+                j = 1;
+                break;
+            }
+            if(j) indexTBE = i - index;
             char query[MAX_COMMAND_LENGTH + 2];
-            strcpy(query, PAST_COMMANDS[(COMMAND_HEAD - index) % 15]);
+            strcpy(query, PAST_COMMANDS[indexTBE]);
 
             struct command* commands = separate_commands(query);
             if(strstr(query, "log") == NULL) add_to_log(query);
-            int i = 0;
+            i = 0;
             while(commands[i].string) {
                 char** args = get_args(commands[i].string, commands[i].background);
                 execute(args);
