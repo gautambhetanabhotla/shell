@@ -58,11 +58,11 @@ void init_shell() {
     // Initialise the shell's home directory to the current working directory
     HOME_DIRECTORY = calloc(PATH_MAX, sizeof(char));
     CURRENT_DIRECTORY = calloc(PATH_MAX, sizeof(char));
-    LAST_DIRECTORY = calloc(PATH_MAX, sizeof(char));
+    // LAST_DIRECTORY = calloc(PATH_MAX, sizeof(char));
 
     getcwd(HOME_DIRECTORY, PATH_MAX);
     getcwd(CURRENT_DIRECTORY, PATH_MAX);
-    getcwd(LAST_DIRECTORY, PATH_MAX);
+    // getcwd(LAST_DIRECTORY, PATH_MAX);
 
     CURRENT_DIRECTORY_CONVERTED = convert_path(CURRENT_DIRECTORY, HOME_DIRECTORY, false);
 

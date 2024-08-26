@@ -30,20 +30,21 @@ char* convert_path_back(char* input_string, bool free_input) {
     }
     else {
         if(strlen(input_string) == 1 && input_string[0] == '-') {
-            char* result = calloc(strlen(LAST_DIRECTORY) + 1, sizeof(char));
-            strcpy(result, LAST_DIRECTORY);
+            char* result = NULL;
+            if(LAST_DIRECTORY) result = strdup(LAST_DIRECTORY);
             return result;
         }
         else {
-            char* result = malloc(strlen(input_string));
-            strcpy(result, input_string);
+            char* result = strdup(input_string);
             return result;
         }
     }
 }
 
 int hop(char** args) {
-    strcpy(LAST_DIRECTORY, CURRENT_DIRECTORY);
+    char* buffer = calloc(PATH_MAX + 1, sizeof(char));
+    strcpy(buffer, CURRENT_DIRECTORY);
+    
     int rc = 0;
     if(!args[1]) {
         rc = chdir(HOME_DIRECTORY);
@@ -55,8 +56,8 @@ int hop(char** args) {
             if(!args[i]) break;
             char* path = convert_path_back(args[i], false);
             if(!path) {
-                fprintf(stderr, "ERROR: Invalid path");
-                return 1;
+                fprintf(stderr, "ERROR: Invalid path\n");
+                return -1;
             }
             rc = chdir(path);
             getcwd(CURRENT_DIRECTORY, PATH_MAX);
@@ -71,13 +72,15 @@ int hop(char** args) {
                         fprintf(stderr, "ERROR: Path does not exist!\n");
                         break;
                     default:
-                        fprintf(stderr, "ERROR: Generic");
+                        fprintf(stderr, "ERROR: Other\n");
                         break;
                 }
                 break;
             }
         }
     }
+    if(LAST_DIRECTORY) strcpy(LAST_DIRECTORY, buffer);
+    else LAST_DIRECTORY = strdup(buffer);
     getcwd(CURRENT_DIRECTORY, PATH_MAX);
     // free(CURRENT_DIRECTORY_CONVERTED);
     CURRENT_DIRECTORY_CONVERTED = convert_path(CURRENT_DIRECTORY, HOME_DIRECTORY, false);
