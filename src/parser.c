@@ -69,7 +69,7 @@ struct command* separate_commands(char* input) {
 }
 
 char** get_args(char* input, bool background) {
-    char* Input = (char*) malloc((strlen(input) + 1) * sizeof(char));
+    char* Input = (char*) calloc((strlen(input) + 1), sizeof(char));
     strcpy(Input, input);
     char* saveptr;
     char** args = NULL;
@@ -77,14 +77,14 @@ char** get_args(char* input, bool background) {
     char* arg = __strtok_r(Input, " ", &saveptr);
     while(arg != NULL) {
         args = realloc(args, sizeof(char*) * (i + 1));
-        args[i] = (char*) malloc(sizeof(char) * (strlen(arg) + 1));
+        args[i] = (char*) calloc((strlen(arg) + 1), sizeof(char));
         strcpy(args[i], arg);
         arg = __strtok_r(NULL, " ", &saveptr);
         i++;
     }
     if(background) {
         args = realloc(args, sizeof(char*) * (i + 1));
-        args[i] = (char*) malloc(sizeof(char) * 2);
+        args[i] = (char*) calloc(sizeof(char) * 2, sizeof(char));
         strcpy(args[i], "&"); // based on what exec() calls assume background
         // arg = __strtok_r(NULL, " ", &saveptr);
         i++;

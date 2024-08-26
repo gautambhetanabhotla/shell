@@ -2,6 +2,7 @@
 #include "parser.h"
 #include "hop.h"
 #include "log.h"
+#include "proclore.h"
 
 #include <linux/limits.h>
 #include <stdlib.h>
@@ -11,10 +12,11 @@
 #include <wait.h>
 
 char *HOME_DIRECTORY = NULL, *USERNAME = NULL, *HOSTNAME = NULL, *CURRENT_DIRECTORY = NULL;
-int (*USER_FUNCTIONS[])(char**) = {hop, exit_shell, Log, NULL};
-char* COMMAND_STRINGS[] = {"hop", "exit", "log", NULL};
+int (*USER_FUNCTIONS[])(char**) = {hop, exit_shell, Log, proclore, NULL};
+char* COMMAND_STRINGS[] = {"hop", "exit", "log", "proclore", NULL};
 
 char* CURRENT_DIRECTORY_CONVERTED = NULL;
+int SHELL_PID;
 
 char* convert_path(char* input_string, char* home_dir, bool free_input) {
     // Converts a general path to one relative to the home directory.
@@ -35,7 +37,7 @@ char* convert_path(char* input_string, char* home_dir, bool free_input) {
 
 void prompt() {
 	printf("\e[0;31m%s@%s:%s\e[0;37m ", USERNAME, HOSTNAME, CURRENT_DIRECTORY_CONVERTED);
-    char* query = malloc(MAX_COMMAND_LENGTH + 2);
+    char* query = calloc(MAX_COMMAND_LENGTH + 2, sizeof(char));
     fgets(query, MAX_COMMAND_LENGTH + 1, stdin);
     query[strlen(query) - 1] = '\0';
     #ifdef DEBUG
@@ -71,6 +73,8 @@ void init_shell() {
 
     HOSTNAME = calloc(254, sizeof(char));
     gethostname(HOSTNAME, 253);
+
+    SHELL_PID = (int) getpid();
 }
 
 int exit_shell(char** args) {

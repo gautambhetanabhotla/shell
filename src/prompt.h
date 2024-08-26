@@ -9,6 +9,7 @@
 extern char *HOME_DIRECTORY, *USERNAME, *HOSTNAME, *CURRENT_DIRECTORY, *CURRENT_DIRECTORY_CONVERTED;
 extern int (*USER_FUNCTIONS[])(char**);
 extern char* COMMAND_STRINGS[];
+extern int SHELL_PID;
 
 char *convert_path(char* input_string, char* home_dir, bool free_input), *current_directory();
 void prompt();

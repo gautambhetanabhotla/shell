@@ -21,15 +21,16 @@ char* convert_path_back(char* input_string, bool free_input) {
         }
         else {
             char* result = malloc(strlen(HOME_DIRECTORY) + strlen(input_string));
-            strcpy(result, HOME_DIRECTORY);
-            strcpy(result + strlen(HOME_DIRECTORY), "/");
-            strcpy(result + strlen(HOME_DIRECTORY) + 1, input_string + 2);
+            // strcpy(result, HOME_DIRECTORY);
+            // strcat(result + strlen(HOME_DIRECTORY), "/");
+            // strcpy(result + strlen(HOME_DIRECTORY) + 1, input_string + 2);
+            sprintf(result, "%s/%s", HOME_DIRECTORY, input_string + 2);
             return result;
         }
     }
     else {
         if(strlen(input_string) == 1 && input_string[0] == '-') {
-            char* result = malloc(strlen(input_string));
+            char* result = calloc(strlen(LAST_DIRECTORY) + 1, sizeof(char));
             strcpy(result, LAST_DIRECTORY);
             return result;
         }
