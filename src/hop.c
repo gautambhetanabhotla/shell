@@ -41,7 +41,7 @@ char* convert_path_back(char* input_string, bool free_input) {
     }
 }
 
-int hop(char** args) {
+int hop(char** args, FILE* istream, FILE* ostream) {
     char* buffer = calloc(PATH_MAX + 1, sizeof(char));
     strcpy(buffer, CURRENT_DIRECTORY);
     

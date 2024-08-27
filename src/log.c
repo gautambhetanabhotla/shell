@@ -97,7 +97,7 @@ int output_log() {
     return 0;
 }
 
-int Log(char** args) {
+int Log(char** args, FILE* istream, FILE* ostream) {
     if(args == NULL) return -1;
     if(args[1] == NULL) {
         output_log();

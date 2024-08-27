@@ -78,7 +78,7 @@ void init_shell() {
     SHELL_PID = (int) getpid();
 }
 
-int exit_shell(char** args) {
+int exit_shell(char** args, FILE* istream, FILE* ostream) {
     save_log();
     free(HOME_DIRECTORY);
     free(CURRENT_DIRECTORY);
@@ -91,7 +91,7 @@ int exit_shell(char** args) {
 void execute(char** args) {
     for(int i = 0; COMMAND_STRINGS[i]; i++) {
         if(strcmp(args[0], COMMAND_STRINGS[i]) == 0) {
-            int rc = USER_FUNCTIONS[i](args);
+            int rc = USER_FUNCTIONS[i](args, stdin, stdout);
             if(rc) fprintf(stderr, "%s exited with status %d\n", COMMAND_STRINGS[i], rc);
             return;
         }

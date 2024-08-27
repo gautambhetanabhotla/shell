@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 #ifndef REVEAL_H
 #define REVEAL_H
 
