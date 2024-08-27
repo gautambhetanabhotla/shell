@@ -3,6 +3,7 @@
 #include "hop.h"
 #include "log.h"
 #include "proclore.h"
+#include "reveal.h"
 
 #include <linux/limits.h>
 #include <stdlib.h>
@@ -12,8 +13,8 @@
 #include <wait.h>
 
 char *HOME_DIRECTORY = NULL, *USERNAME = NULL, *HOSTNAME = NULL, *CURRENT_DIRECTORY = NULL;
-int (*USER_FUNCTIONS[])(char**) = {hop, exit_shell, Log, proclore, NULL};
-char* COMMAND_STRINGS[] = {"hop", "exit", "log", "proclore", NULL};
+int (*USER_FUNCTIONS[])(char**, FILE*, FILE*) = {hop, exit_shell, Log, proclore, reveal, NULL};
+char* COMMAND_STRINGS[] = {"hop", "exit", "log", "proclore", "reveal", NULL};
 
 char* CURRENT_DIRECTORY_CONVERTED = NULL;
 int SHELL_PID;
@@ -41,7 +42,7 @@ void prompt() {
     fgets(query, MAX_COMMAND_LENGTH + 1, stdin);
     query[strlen(query) - 1] = '\0';
     #ifdef DEBUG
-        printf("QUERY: %s\n", query);
+        // printf("QUERY: %s\n", query);
     #endif
     struct command* commands = separate_commands(query);
     if(strstr(query, "log") == NULL) add_to_log(query);

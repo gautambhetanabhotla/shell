@@ -12,7 +12,7 @@ extern char* HOME_DIRECTORY;
 char* LAST_DIRECTORY = NULL;
 
 char* convert_path_back(char* input_string, bool free_input) {
-    // returns the path after expanding the home directory
+    // returns the path after expanding the home directory or '-'
     if(!input_string) return NULL;
     if(strstr(input_string, "~") != NULL) {
         if(input_string[0] != '~') {

@@ -8,7 +8,7 @@
 #include <linux/limits.h>
 #include <string.h>
 
-int print_process_data(int pid) {
+int print_process_data(int pid, FILE* ostream) {
     int rc = 0;
     char file_path[42];
     sprintf(file_path, "/proc/%d/stat", pid);
@@ -23,7 +23,8 @@ int print_process_data(int pid) {
 
     int pgid = 0, n, controlling_terminal;
     long long unsigned int vmem = 0;
-    char p_status[100], exe_path[PATH_MAX + 2] = {'\0'};
+    char p_status[100], exe_path[PATH_MAX + 2];
+    strcpy(exe_path, "Could not be determined: permission denied");
     
     n = 3;
     while(n--) fscanf(status_file, "%s", p_status);
@@ -40,15 +41,15 @@ int print_process_data(int pid) {
     if(readlink(file_path, exe_path, PATH_MAX) == -1) rc = -1;
     if(controlling_terminal != 0) strcat(p_status, "+");
 
-    printf("PID: %d\nProcess status: %s\nProcess group: %d\nVirtual memory: %llu\nExecutable path: %s\n", pid, p_status, pgid, vmem, exe_path);
+    fprintf(ostream, "PID: %d\nProcess status: %s\nProcess group: %d\nVirtual memory: %llu\nExecutable path: %s\n", pid, p_status, pgid, vmem, exe_path);
     return rc;
 }
 
-int proclore(char** args) {
+int proclore(char** args, FILE* istream, FILE* ostream) {
     if(args[1] == NULL) {
-        return print_process_data(SHELL_PID);
+        return print_process_data(SHELL_PID, ostream);
     }
     else {
-        return print_process_data(atoi(args[1]));   
+        return print_process_data(atoi(args[1]), ostream);   
     }
 }

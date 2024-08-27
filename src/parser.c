@@ -61,8 +61,8 @@ struct command* separate_commands(char* input) {
     commands[i].string = NULL;
 
     #ifdef DEBUG
-        printf("Commands:\n");
-        for(int j = 0; j < i; j++) if(commands[j].string) printf("%s: %s\n", commands[j].string, commands[j].background ? "Background" : "Foreground");
+        // printf("Commands:\n");
+        // for(int j = 0; j < i; j++) if(commands[j].string) printf("%s: %s\n", commands[j].string, commands[j].background ? "Background" : "Foreground");
     #endif
 
     return commands;
@@ -93,8 +93,8 @@ char** get_args(char* input, bool background) {
     args[i] = NULL;
 
     #ifdef DEBUG
-        printf("Args:\n");
-        for(int j = 0; j < i; j++) if(args[j]) printf("%s\n", args[j]);
+        // printf("Args:\n");
+        // for(int j = 0; j < i; j++) if(args[j]) printf("%s\n", args[j]);
     #endif
 
     return args;

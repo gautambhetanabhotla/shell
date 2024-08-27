@@ -119,6 +119,10 @@ int Log(char** args) {
                 break;
             }
             if(j) indexTBE = i - index;
+            if(indexTBE >= 15 || indexTBE < 0 || PAST_COMMANDS[indexTBE] == NULL) {
+                fprintf(stderr, "ERROR: Invalid index\n");
+                return -1;
+            }
             char query[MAX_COMMAND_LENGTH + 2];
             strcpy(query, PAST_COMMANDS[indexTBE]);
 
