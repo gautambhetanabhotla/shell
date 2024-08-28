@@ -23,8 +23,8 @@ int print_process_data(int pid, FILE* ostream) {
 
     int pgid = 0, n, controlling_terminal;
     long long unsigned int vmem = 0;
-    char p_status[100], exe_path[PATH_MAX + 2];
-    strcpy(exe_path, "Could not be determined: permission denied");
+    char p_status[100], exe_path[PATH_MAX + 2] = {'\0'};
+    // strcpy(exe_path, "Could not be determined");
     
     n = 3;
     while(n--) fscanf(status_file, "%s", p_status);
@@ -41,7 +41,11 @@ int print_process_data(int pid, FILE* ostream) {
     if(readlink(file_path, exe_path, PATH_MAX) == -1) rc = -1;
     if(controlling_terminal != 0) strcat(p_status, "+");
 
-    fprintf(ostream, "PID: %d\nProcess status: %s\nProcess group: %d\nVirtual memory: %llu\nExecutable path: %s\n", pid, p_status, pgid, vmem, exe_path);
+    fprintf(ostream,
+        "PID: %d\nProcess status: %s\nProcess group: %d\nVirtual memory: %llu\nExecutable path: %s\n",
+        pid, p_status, pgid, vmem,
+        rc ? "Could not be determined, possibly due to lack of permissions" : exe_path
+    );
     return rc;
 }
 

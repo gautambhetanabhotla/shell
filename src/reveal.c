@@ -24,13 +24,16 @@ int compare_directories(const void *a, const void* b) {
 void print_dir(struct directory dir, bool l, bool a, FILE* ostream) {
     bool isdir = (dir.perms[0] == 'd');
     bool isbinary = false;
-    if(l) {
-        fprintf(ostream, "%s", dir.perms);
-        fprintf(ostream, " %10lld  ", dir.size);
+    bool ishidden = (dir.name[0] == '.');
+    if(a || !ishidden) {
+        if(l) {
+            fprintf(ostream, "%s", dir.perms);
+            fprintf(ostream, " %10lld  ", dir.size);
+        }
+        if(isbinary) fprintf(ostream, "\033[0;32m%s\033[0m\n", dir.name);
+        else if(isdir) fprintf(ostream, "\033[0;34m%s\033[0m\n", dir.name);
+        else fprintf(ostream, "%s\n", dir.name);
     }
-    if(isbinary) fprintf(ostream, "\033[0;32m%s\033[0m\n", dir.name);
-    else if(isdir) fprintf(ostream, "\033[0;34m%s\033[0m\n", dir.name);
-    else fprintf(ostream, "%s\n", dir.name);
 }
 
 int reveal(char** args, FILE* istream, FILE* ostream) {
@@ -46,7 +49,7 @@ int reveal(char** args, FILE* istream, FILE* ostream) {
             }
         }
         else {
-            if(strlen(path) == 0) strcpy(path, args[i]);
+            if(strlen(path) == 0) strcpy(path, convert_path_back(args[i], false));
         }
         i++;
     }
@@ -69,8 +72,11 @@ int reveal(char** args, FILE* istream, FILE* ostream) {
 
     while((entry = readdir(dir)) != NULL) {
         directories = realloc(directories, (num + 1) * sizeof(struct directory));
-        char path2[PATH_MAX];
-        snprintf(path2, sizeof(path2), "%s/%s", CURRENT_DIRECTORY, entry->d_name);
+        char path2[2 * PATH_MAX];
+        sprintf(path2, "%s/%s", path, entry->d_name);
+        #ifdef DEBUG
+            // printf("file to reveal: %s\n", path2);
+        #endif
 
         if(lstat(path2, &statbuf) == -1) {
             #ifdef DEBUG

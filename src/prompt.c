@@ -40,6 +40,7 @@ void prompt() {
 	printf("\e[0;31m%s@%s:%s\e[0;37m ", USERNAME, HOSTNAME, CURRENT_DIRECTORY_CONVERTED);
     char* query = calloc(MAX_COMMAND_LENGTH + 2, sizeof(char));
     fgets(query, MAX_COMMAND_LENGTH + 1, stdin);
+    if(query[0] == '\0' || query[1] == '\0') return;
     query[strlen(query) - 1] = '\0';
     #ifdef DEBUG
         // printf("QUERY: %s\n", query);
