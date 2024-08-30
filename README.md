@@ -6,3 +6,4 @@
 - A process is considered a background process if its controlling terminal is 0. Although this is not always the case, we will assume so for this mini project.
 - For some processes, permission for obtaining paths to their executables is denied.
 - Invalid flags in `reveal` are ignored.
+- Symbolic links are also represented in `ls -l`
