@@ -131,7 +131,7 @@ int Log(char** args, FILE* istream, FILE* ostream) {
             i = 0;
             while(commands[i].string) {
                 char** args = get_args(commands[i].string, commands[i].background);
-                execute(args);
+                execute(args, commands[i].background);
                 i++;
             }
         }
