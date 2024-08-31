@@ -10,6 +10,7 @@
 #include <linux/limits.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <time.h>
 
 struct directory {
     char perms[11]; // null-terminated string of permissions
@@ -17,6 +18,7 @@ struct directory {
     char name[NAME_MAX + 2];
     char parent[PATH_MAX + 1];
     char linkto[PATH_MAX + 1];
+    char last_modified_time[100];
 };
 
 int compare_directories(const void *a, const void* b) {
@@ -42,17 +44,20 @@ void print_dir(struct directory dir, bool l, bool a, FILE* ostream) {
         if(l) {
             fprintf(ostream, "%s", dir.perms);
             fprintf(ostream, " %10lld  ", dir.size);
+            fprintf(ostream, "%s ", dir.last_modified_time);
         }
         if(dir.perms[0] == 'd') fprintf(ostream, "\033[0;34m%s\033[0m", dir.name);
         else if(dir.perms[3] == 'x') fprintf(ostream, "\033[0;32m%s\033[0m", dir.name);
         else fprintf(ostream, "%s", dir.name);
+        
         if(l && (strlen(dir.linkto) != 0)) fprintf(ostream, " -> %s", dir.linkto);
         fprintf(ostream, "\n");
     }
 }
 
 int reveal(char** args, FILE* istream, FILE* ostream) {
-    long int total_size = 0;
+    long int blocks = 0;
+    int blocksize = 0;
     bool l = false, a = false;
     char path[PATH_MAX] = {'\0'};
     int i = 1;
@@ -108,6 +113,8 @@ int reveal(char** args, FILE* istream, FILE* ostream) {
             char shit[2 * PATH_MAX];
             sprintf(shit, "%s/%s", path, dir.name);
             if((S_ISLNK(statbuf.st_mode))) readlink(shit, dir.linkto, PATH_MAX);
+            strcpy(dir.last_modified_time, ctime(&statbuf.st_mtime));
+            dir.last_modified_time[strlen(dir.last_modified_time) - 1] = '\0';
             print_dir(dir, l, a, ostream);
             return 0;
         }
@@ -131,7 +138,10 @@ int reveal(char** args, FILE* istream, FILE* ostream) {
             #endif
             continue;
         }
-        if(strcmp(entry->d_name, ".") == 0) total_size = statbuf.st_blocks;
+        if(strcmp(entry->d_name, ".") == 0) {
+            blocks = statbuf.st_blocks;
+            blocksize = statbuf.st_blksize;
+        }
 
         // printf("%c", (S_ISDIR(statbuf.st_mode)) ? 'd' : '.');
         sprintf(directories[num].perms, "%c%c%c%c%c%c%c%c%c%c",
@@ -155,12 +165,14 @@ int reveal(char** args, FILE* istream, FILE* ostream) {
         if(S_ISDIR(statbuf.st_mode)) strcat(directories[num].name, "/");
         char shit[2 * PATH_MAX];
         sprintf(shit, "%s/%s", path, directories[num].name);
+        strcpy(directories[num].last_modified_time, ctime(&statbuf.st_mtime));
+        directories[num].last_modified_time[strlen(directories[num].last_modified_time) - 1] = '\0';
         if((S_ISLNK(statbuf.st_mode))) readlink(shit, directories[num].linkto, PATH_MAX);
         num++;
     }
     closedir(dir);
 
-    if(l) fprintf(ostream, "Total blocks allocated: %ld blocks of 512B each\n", total_size);
+    if(l) fprintf(ostream, "Total blocks allocated: %ld blocks of %d kB each\n", blocks, blocksize);
     qsort(directories, num, sizeof(struct directory), compare_directories);
     for(int i = 0; i < num; i++) print_dir(directories[i], l, a, ostream);
 

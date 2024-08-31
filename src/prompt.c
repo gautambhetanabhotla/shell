@@ -4,6 +4,7 @@
 #include "log.h"
 #include "proclore.h"
 #include "reveal.h"
+#include "seek.h"
 
 #include <linux/limits.h>
 #include <stdlib.h>
@@ -13,8 +14,8 @@
 #include <wait.h>
 
 char *HOME_DIRECTORY = NULL, *USERNAME = NULL, *HOSTNAME = NULL, *CURRENT_DIRECTORY = NULL;
-int (*USER_FUNCTIONS[])(char**, FILE*, FILE*) = {hop, exit_shell, Log, proclore, reveal, NULL};
-char* COMMAND_STRINGS[] = {"hop", "exit", "log", "proclore", "reveal", NULL};
+int (*USER_FUNCTIONS[])(char**, FILE*, FILE*) = {hop, exit_shell, Log, proclore, reveal, seek, NULL};
+char* COMMAND_STRINGS[] = {"hop", "exit", "log", "proclore", "reveal", "seek", NULL};
 
 char* CURRENT_DIRECTORY_CONVERTED = NULL;
 int SHELL_PID;
