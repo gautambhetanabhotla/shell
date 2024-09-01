@@ -4,7 +4,7 @@
 #ifndef PROMPT_H
 #define PROMPT_H
 
-#define MAX_COMMAND_LENGTH 1024
+#define MAX_COMMAND_LENGTH 4096
 
 extern char *HOME_DIRECTORY, *USERNAME, *HOSTNAME, *CURRENT_DIRECTORY, *CURRENT_DIRECTORY_CONVERTED;
 extern int (*USER_FUNCTIONS[])(char** args, FILE* istream, FILE* ostream);

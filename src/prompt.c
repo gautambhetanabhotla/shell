@@ -122,6 +122,10 @@ void execute(char** args, bool background) {
         int stat;
         time(&t_start);
         if(!background) waitpid(rc2, &stat, WUNTRACED);
+        else {
+            printf("%d\n", rc2);
+            strings[rc2] = strdup(args[0]);
+        }
         time(&t_end);
         if(difftime(t_end, t_start) >= 2) {
             snprintf(MOST_RECENT_FG_PROCESS, NAME_MAX, "%s: %d sec", args[0], (int)difftime(t_end, t_start));
