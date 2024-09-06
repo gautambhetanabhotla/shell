@@ -54,6 +54,16 @@ void prompt() {
     struct command* commands = separate_commands(query);
     if(strstr(query, "log") == NULL) add_to_log(query);
     int i = 0;
+    while(commands[i].string != NULL) i++;
+    if(commands && commands[i-1].sending_pipe == true) {
+        fprintf(stderr, "Invalid usage of pipe!\n");
+        return;
+    }
+    else if(commands && commands[0].receiving_pipe == true) {
+        fprintf(stderr, "Invalid usage of pipe!\n");
+        return;
+    }
+    i = 0;
     while(commands[i].string) {
         char** args = get_args(commands[i].string, commands[i].background);
         execute(args, commands[i].background);

@@ -2,7 +2,7 @@
 *.out
 .vscode/
 build/
-test
+test*
 test.c
 sys
 .fuse*

@@ -5,6 +5,9 @@
 ## Spec 1
 Prompt format: `username@system-name:directory recent-foreground-process:time $`
 
+## Spec 2
+Only tabs and spaces are considered whitespace characters.
+
 ## Spec 3
 - When given multiple arguments to hop, it sequentially moves to those directories until an erroneous path is given.
 

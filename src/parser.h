@@ -5,7 +5,7 @@
 
 struct command {
     char* string;
-    bool background;
+    bool background, receiving_pipe, sending_pipe;
 };
 
 struct command* separate_commands(char* input);
