@@ -15,6 +15,8 @@
 #include <wait.h>
 #include <signal.h>
 #include <time.h>
+#include <fcntl.h>
+#include <errno.h>
 
 char *HOME_DIRECTORY = NULL, *USERNAME = NULL, *HOSTNAME = NULL, *CURRENT_DIRECTORY = NULL;
 int (*USER_FUNCTIONS[])(char**, FILE*, FILE*) = {hop, exit_shell, Log, proclore, reveal, seek, NULL};
@@ -53,8 +55,11 @@ void prompt() {
     #endif
     struct command* commands = separate_commands(query);
     if(strstr(query, "log") == NULL) add_to_log(query);
-    int i = 0;
-    while(commands[i].string != NULL) i++;
+    int i = 0, num_pipes = 0;
+    while(commands[i].string != NULL) {
+        if(commands[i].receiving_pipe) num_pipes++;
+        i++;
+    }
     if(commands && commands[i-1].sending_pipe == true) {
         fprintf(stderr, "Invalid usage of pipe!\n");
         return;
@@ -63,10 +68,12 @@ void prompt() {
         fprintf(stderr, "Invalid usage of pipe!\n");
         return;
     }
+    int pipes[i][2];
+    FILE *istream, *ostream;
     i = 0;
     while(commands[i].string) {
         char** args = get_args(commands[i].string, commands[i].background);
-        execute(args, commands[i].background);
+        execute(args, commands[i].background, istream, ostream);
         i++;
     }
     // free(query);
@@ -110,12 +117,12 @@ int exit_shell(char** args, FILE* istream, FILE* ostream) {
     exit(0);
 }
 
-void execute(char** args, bool background) {
+void execute(char** args, bool background, FILE* istream, FILE* ostream) {
     time_t t_start, t_end;
     for(int i = 0; COMMAND_STRINGS[i]; i++) {
         if(strcmp(args[0], COMMAND_STRINGS[i]) == 0) {
             time(&t_start);
-            int rc = USER_FUNCTIONS[i](args, stdin, stdout);
+            int rc = USER_FUNCTIONS[i](args, istream, ostream);
             time(&t_end);
             if(difftime(t_end, t_start) >= 2) {
                 snprintf(MOST_RECENT_FG_PROCESS, NAME_MAX, "%s: %d sec", args[0], (int)difftime(t_end, t_start));

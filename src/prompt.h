@@ -14,7 +14,7 @@ extern int SHELL_PID;
 char *convert_path(char* input_string, char* home_dir, bool free_input);
 void prompt();
 void init_shell();
-void execute(char** args, bool background);
+void execute(char** args, bool background, FILE* istream, FILE* ostream);
 int exit_shell(char** args, FILE* istream, FILE* ostream);
 
 #endif
