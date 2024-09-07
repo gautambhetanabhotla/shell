@@ -73,6 +73,17 @@ void prompt() {
     i = 0;
     while(commands[i].string) {
         char** args = get_args(commands[i].string, commands[i].background);
+        if(commands[i].sending_pipe) {
+            if(pipe(pipes[i])) {
+                fprintf(stderr, "Failed to create pipe!\n");
+                perror("pipe");
+                return;
+            }
+            ostream = fdopen(pipes[i][1], "w");
+        }
+        if(commands[i].receiving_pipe) {
+            istream = fdopen(pipes[i-1][0], "r");
+        }
         execute(args, commands[i].background, istream, ostream);
         i++;
     }
