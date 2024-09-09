@@ -6,6 +6,7 @@
 #include "reveal.h"
 #include "seek.h"
 #include "background.h"
+#include "activities.h"
 
 #include <linux/limits.h>
 #include <stdlib.h>
@@ -19,8 +20,8 @@
 #include <errno.h>
 
 char *HOME_DIRECTORY = NULL, *USERNAME = NULL, *HOSTNAME = NULL, *CURRENT_DIRECTORY = NULL;
-int (*USER_FUNCTIONS[])(char**, FILE*, FILE*) = {hop, exit_shell, Log, proclore, reveal, seek, NULL};
-char* COMMAND_STRINGS[] = {"hop", "exit", "log", "proclore", "reveal", "seek", NULL};
+int (*USER_FUNCTIONS[])(char**, FILE*, FILE*) = {hop, exit_shell, Log, proclore, reveal, seek, activities, NULL};
+char* COMMAND_STRINGS[] = {"hop", "exit", "log", "proclore", "reveal", "seek", "activities", NULL};
 
 char* CURRENT_DIRECTORY_CONVERTED = NULL;
 int SHELL_PID;
