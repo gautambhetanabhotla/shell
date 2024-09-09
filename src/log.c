@@ -6,6 +6,7 @@
 #include <linux/limits.h>
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 char* PAST_COMMANDS[15] = {NULL};
 int COMMAND_HEAD = 0;
@@ -129,11 +130,42 @@ int Log(char** args, FILE* istream, FILE* ostream) {
             struct command* commands = separate_commands(query);
             if(strstr(query, "log") == NULL) add_to_log(query);
             i = 0;
-            while(commands[i].string) {
-                char** args = get_args(commands[i].string, commands[i].background);
-                execute(args, commands[i].background);
+            while(commands[i].string != NULL) {
                 i++;
             }
+            if(commands && commands[i-1].sending_pipe == true) {
+                fprintf(stderr, "Invalid usage of pipe!\n");
+                return -1;
+            }
+            else if(commands && commands[0].receiving_pipe == true) {
+                fprintf(stderr, "Invalid usage of pipe!\n");
+                return -1;
+            }
+            int pipes[i][2];
+            FILE *istream = stdin, *ostream = stdout;
+            j = 0;
+            while(commands[j].string) {
+                char** args = get_args(commands[j].string, commands[j].background);
+                if(commands[j].sending_pipe) {
+                    if(pipe(pipes[j])) {
+                        fprintf(stderr, "Failed to create pipe!\n");
+                        perror("pipe");
+                        return -1;
+                    }
+                    ostream = fdopen(pipes[j][1], "w");
+                }
+                if(commands[j].receiving_pipe) {
+                    istream = fdopen(pipes[j-1][0], "r");
+                }
+                execute(args, commands[j].background, istream, ostream);
+                j++;
+            }
+            for(j = 0; j < i; i++) {
+                close(pipes[j][0]);
+                close(pipes[j][1]);
+                free(commands[j].string);
+            }
+            free(commands);
         }
     }
     return 0;

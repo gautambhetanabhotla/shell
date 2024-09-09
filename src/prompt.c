@@ -55,9 +55,8 @@ void prompt() {
     #endif
     struct command* commands = separate_commands(query);
     if(strstr(query, "log") == NULL) add_to_log(query);
-    int i = 0, num_pipes = 0;
+    int i = 0;
     while(commands[i].string != NULL) {
-        if(commands[i].receiving_pipe) num_pipes++;
         i++;
     }
     if(commands && commands[i-1].sending_pipe == true) {
@@ -69,25 +68,39 @@ void prompt() {
         return;
     }
     int pipes[i][2];
-    FILE *istream, *ostream;
-    i = 0;
-    while(commands[i].string) {
-        char** args = get_args(commands[i].string, commands[i].background);
-        if(commands[i].sending_pipe) {
-            if(pipe(pipes[i])) {
+    int j = 0;
+    while(commands[j].string) {
+        int save_stdin = dup(STDIN_FILENO), save_stdout = dup(STDOUT_FILENO);
+        FILE* istream = stdin, *ostream = stdout;
+        char** args = get_args(commands[j].string, commands[j].background);
+        if(commands[j].sending_pipe) {
+            if(pipe(pipes[j])) {
                 fprintf(stderr, "Failed to create pipe!\n");
                 perror("pipe");
                 return;
             }
-            ostream = fdopen(pipes[i][1], "w");
+            // ostream = fdopen(pipes[j][1], "w");
+            dup2(pipes[j][1], STDOUT_FILENO);
+
         }
-        if(commands[i].receiving_pipe) {
-            istream = fdopen(pipes[i-1][0], "r");
+        if(commands[j].receiving_pipe) {
+            // istream = fdopen(pipes[j-1][0], "r");
+            dup2(pipes[j-1][0], STDIN_FILENO);
         }
-        execute(args, commands[i].background, istream, ostream);
-        i++;
+        // istream = fdopen(STDIN_FILENO, "r");
+        // ostream = fdopen(STDOUT_FILENO, "a");
+        execute(args, commands[j].background, istream, ostream);
+        dup2(save_stdin, STDIN_FILENO);
+        dup2(save_stdout, STDOUT_FILENO);
+        j++;
     }
-    // free(query);
+    for(j = 0; j < i; j++) {
+        close(pipes[j][0]);
+        close(pipes[j][1]);
+        free(commands[j].string);
+    }
+    free(commands);
+    free(query);
 }
 
 void init_shell() {

@@ -7,7 +7,13 @@
 
 struct command* realloc_commands(struct command* input, int size) {
     struct command* result = malloc((size + 1) * sizeof(struct command));
-    if(input == NULL) return result;
+    if(input == NULL) {
+        result[0].string = NULL;
+        result[0].background = false;
+        result[0].receiving_pipe = false;
+        result[0].sending_pipe = false;
+        return result;
+    }
     if(result == NULL) return NULL;
     for(int i = 0; i < size; i++) {
         result[i].string = input[i].string;

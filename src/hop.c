@@ -83,7 +83,7 @@ int hop(char** args, FILE* istream, FILE* ostream) {
             }
             rc = chdir(path);
             getcwd(CURRENT_DIRECTORY, PATH_MAX);
-            printf("%s\n", CURRENT_DIRECTORY);
+            fprintf(ostream, "%s\n", CURRENT_DIRECTORY);
             free(path);
             if(rc) {
                 switch(errno) {
