@@ -20,6 +20,10 @@ void disable_raw_mode() {
     tcsetattr(STDIN_FILENO, TCSAFLUSH, &ORIGINAL_TERM);
 }
 
+int most_recent_pid() {
+    
+}
+
 int neonate(char** args, FILE* istream, FILE* ostream) {
     int time_arg = 1;
     for(int i = 1; i < 3; i++) {
@@ -51,7 +55,7 @@ int neonate(char** args, FILE* istream, FILE* ostream) {
             break;
         }
         else if(retval) {
-            if (fgetc(istream) == 'x') {
+            if(fgetc(istream) == 'x') {
                 break;
             }
         }

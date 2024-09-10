@@ -104,6 +104,11 @@ int hop(char** args, FILE* istream, FILE* ostream) {
     if(LAST_DIRECTORY) strcpy(LAST_DIRECTORY, buffer);
     else LAST_DIRECTORY = strdup(buffer);
     getcwd(CURRENT_DIRECTORY, PATH_MAX);
+    char buf[PATH_MAX];
+    snprintf(buf, sizeof(buf), "%s/dirfile.txt", HOME_DIRECTORY);
+    FILE* dirfile = fopen(CURRENT_DIRECTORY, "w");
+    fprintf(dirfile, "%s\n", CURRENT_DIRECTORY);
+    fclose(dirfile);
     // free(CURRENT_DIRECTORY_CONVERTED);
     CURRENT_DIRECTORY_CONVERTED = convert_path(CURRENT_DIRECTORY, HOME_DIRECTORY, false);
     return rc;
