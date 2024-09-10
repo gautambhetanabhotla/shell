@@ -11,7 +11,7 @@ struct sigaction act;
 
 char* strings[10000000] = {NULL};
 
-void handler(int signo, siginfo_t* siginfo, void* context) {
+void sigchld_handler(int signo, siginfo_t* siginfo, void* context) {
 	if(signo == SIGCHLD) {
 		int status;
 		pid_t pid;

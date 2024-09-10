@@ -10,6 +10,7 @@ extern char *HOME_DIRECTORY, *USERNAME, *HOSTNAME, *CURRENT_DIRECTORY, *CURRENT_
 extern int (*USER_FUNCTIONS[])(char** args, FILE* istream, FILE* ostream);
 extern char* COMMAND_STRINGS[];
 extern int SHELL_PID;
+extern int FG_PID;
 
 char *convert_path(char* input_string, char* home_dir, bool free_input);
 void prompt();

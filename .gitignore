@@ -6,5 +6,8 @@ test*
 test.c
 sys
 .fuse*
-log.txt
 .myshrc
+*.swp
+*.txt
+.swp
+*/.swp

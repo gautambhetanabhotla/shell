@@ -4,6 +4,7 @@
 #include <string.h>
 
 int activities(char** args, FILE* istream, FILE* ostream) {
+    char** shit100 = NULL;
     for(int pid = 1; pid < 10000000; pid++) {
         if(strings[pid]) {
             char buf[100];
