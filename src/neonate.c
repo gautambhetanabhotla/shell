@@ -6,6 +6,10 @@
 #include <stdlib.h>
 #include <sys/select.h>
 #include <time.h>
+#include <dirent.h>
+#include <linux/limits.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 struct termios ORIGINAL_TERM;
 
@@ -21,7 +25,30 @@ void disable_raw_mode() {
 }
 
 int most_recent_pid() {
-    
+    time_t most_recent_time = 0;
+    int result = 0;
+    DIR* dir = opendir("/proc");
+    if(dir == NULL) {
+        return -1;
+    }
+    struct dirent* entry;
+    struct stat buf;
+    while((entry = readdir(dir)) != NULL) {
+        char entry_path[PATH_MAX];
+        sprintf(entry_path, "/proc/%s", entry->d_name);
+        if(entry->d_name[0] > '9' || entry->d_name[0] < '0') continue;
+        if(lstat(entry_path, &buf)) {
+            continue;
+        }
+        if((S_ISDIR(buf.st_mode))) {
+            if(difftime(buf.st_ctime, most_recent_time) > 0) {
+                most_recent_time = buf.st_mtime;
+                result = atoi(entry->d_name);
+            }
+        }
+    }
+    closedir(dir);
+    return result;
 }
 
 int neonate(char** args, FILE* istream, FILE* ostream) {
@@ -60,7 +87,7 @@ int neonate(char** args, FILE* istream, FILE* ostream) {
             }
         }
         else {
-            fprintf(ostream, "348234\n");
+            fprintf(ostream, "%d\n", most_recent_pid());
             fflush(ostream);
         }
     }

@@ -5,5 +5,6 @@
 
 int neonate(char** args, FILE* istream, FILE* ostream);
 extern struct termios ORIGINAL_TERM;
+int most_recent_pid();
 
 #endif
