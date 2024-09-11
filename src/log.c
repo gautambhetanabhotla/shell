@@ -14,8 +14,9 @@ int COMMAND_HEAD = 0;
 int init_log() {
     // for(int i = 0; i < 15; i++) PAST_COMMANDS[i] = (char*) malloc(MAX_COMMAND_LENGTH + 1);
     char log_path[PATH_MAX];
-    strcpy(log_path, HOME_DIRECTORY);
-    strcpy(log_path + strlen(HOME_DIRECTORY), "/log.txt");
+    snprintf(log_path, sizeof(log_path), "%s/log.txt", HOME_DIRECTORY);
+    // strcpy(log_path, HOME_DIRECTORY);
+    // strcpy(log_path + strlen(HOME_DIRECTORY), "/log.txt");
     FILE* log_f = fopen(log_path, "r");
     if(log_f != NULL) {
         char string[MAX_COMMAND_LENGTH + 2];
@@ -40,8 +41,7 @@ int init_log() {
 
 int save_log() {
     char log_path[PATH_MAX];
-    strcpy(log_path, HOME_DIRECTORY);
-    strcpy(log_path + strlen(HOME_DIRECTORY), "/log.txt");
+    snprintf(log_path, sizeof(log_path), "%s/log.txt", HOME_DIRECTORY);
     FILE* log_f = fopen(log_path, "w");
     if(log_f != NULL) {
         int n = 14;

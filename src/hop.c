@@ -106,7 +106,7 @@ int hop(char** args, FILE* istream, FILE* ostream) {
     getcwd(CURRENT_DIRECTORY, PATH_MAX);
     char buf[PATH_MAX];
     snprintf(buf, sizeof(buf), "%s/dirfile.txt", HOME_DIRECTORY);
-    FILE* dirfile = fopen(CURRENT_DIRECTORY, "w");
+    FILE* dirfile = fopen(buf, "w");
     fprintf(dirfile, "%s\n", CURRENT_DIRECTORY);
     fclose(dirfile);
     // free(CURRENT_DIRECTORY_CONVERTED);

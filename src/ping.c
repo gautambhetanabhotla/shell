@@ -25,7 +25,7 @@ int ping(char** args, FILE* istream, FILE* ostream) {
 
 void handle_sig_int() {
     // ctrl c
-    fprintf(stderr, "Received SIGINT\n");
+    // fprintf(stderr, "PID %d received SIGINT - Shell PID = %d\n", getpid(), SHELL_PID);
 }
 
 void handle_sig_quit() {

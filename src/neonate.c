@@ -10,13 +10,14 @@
 #include <linux/limits.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <stdbool.h>
 
 struct termios ORIGINAL_TERM;
 
 void enable_raw_mode() {
     struct termios raw;
     tcgetattr(STDIN_FILENO, &raw);
-    raw.c_lflag &= ~(ICANON);
+    raw.c_lflag &= ~(ICANON | ECHO);
     tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
 }
 
@@ -53,15 +54,21 @@ int most_recent_pid() {
 
 int neonate(char** args, FILE* istream, FILE* ostream) {
     int time_arg = 1;
+    bool correct_args = false;
     for(int i = 1; i < 3; i++) {
         if(!args[i]) {
             fprintf(stderr, "ERROR: Invalid arguments\n");
             return -1;
         }
         if(strcmp(args[i], "-n") != 0) time_arg = atoi(args[i]);
+        else correct_args = true;
+    }
+    if(!correct_args) {
+        fprintf(stderr, "ERROR: Invalid arguments\n");
+        return -1;
     }
     if(time_arg == 0) {
-        fprintf(stderr, "Set a proper non-zero time.\n");
+        fprintf(stderr, "Set a proper non-zero integer time.\n");
         return -1;
     }
     enable_raw_mode();
@@ -78,7 +85,9 @@ int neonate(char** args, FILE* istream, FILE* ostream) {
         int retval = select(fileno(istream) + 1, &readfds, NULL, NULL, &tv);
 
         if(retval == -1) {
+            #ifdef DEBUG
             perror("select()");
+            #endif
             break;
         }
         else if(retval) {
