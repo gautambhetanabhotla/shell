@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <wait.h>
 
-int fg(char** args, FILE* istream, FILE* ostream) {
+int fg(char** args) {
     if(args == NULL || args[1] == NULL) {
         fprintf(stderr, "ERROR: Invalid arguments\n");
         return -1;
@@ -16,7 +16,7 @@ int fg(char** args, FILE* istream, FILE* ostream) {
         return -1;
     }
     // Get the terminal file descriptor
-    int fd = fileno(istream);
+    int fd = fileno(stdin);
 
     // Set the process group ID of the specified process
     if (tcsetpgrp(fd, pid) == -1) {
@@ -53,7 +53,7 @@ int fg(char** args, FILE* istream, FILE* ostream) {
     return 0;
 }
 
-int bg(char** args, FILE* istream, FILE* ostream) {
+int bg(char** args) {
     if(args == NULL || args[1] == NULL) {
         fprintf(stderr, "ERROR: Invalid arguments\n");
         return -1;

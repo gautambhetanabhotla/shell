@@ -6,6 +6,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include <linux/limits.h>
+#include <sys/types.h>
 
 struct sigaction act;
 

@@ -98,7 +98,7 @@ int output_log() {
     return 0;
 }
 
-int Log(char** args, FILE* istream, FILE* ostream) {
+int Log(char** args) {
     if(args == NULL) return -1;
     if(args[1] == NULL) {
         output_log();
@@ -157,7 +157,7 @@ int Log(char** args, FILE* istream, FILE* ostream) {
                 if(commands[j].receiving_pipe) {
                     istream = fdopen(pipes[j-1][0], "r");
                 }
-                execute(args, commands[j].background, istream, ostream);
+                execute(args, commands[j].background);
                 j++;
             }
             for(j = 0; j < i; i++) {

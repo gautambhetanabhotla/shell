@@ -3,6 +3,6 @@
 #ifndef ACTIVITIES_H
 #define ACTIVITIES_H
 
-int activities(char** args, FILE* istream, FILE* ostream);
+int activities(char** args);
 
 #endif

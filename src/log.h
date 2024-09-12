@@ -6,6 +6,6 @@
 extern char* PAST_COMMANDS[15];
 extern int command_head;
 
-int init_log(), save_log(), purge_log(), add_to_log(char*), output_log(), Log(char**, FILE*, FILE*);
+int init_log(), save_log(), purge_log(), add_to_log(char*), output_log(), Log(char** args);
 
 #endif

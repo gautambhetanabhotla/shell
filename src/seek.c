@@ -45,16 +45,16 @@ void search_directory_r(char* parent, char* path, char* target, FILE* ostream, i
             if(((S_ISDIR(buf.st_mode)) && f) || ((!(S_ISDIR(buf.st_mode))) && d)) continue;
             (*num_matches)++;
             *match = path_wrt(entry_path, parent);
-            if((S_ISDIR(buf.st_mode))) fprintf(ostream, "\033[0;34m");
-            else fprintf(ostream, "\033[0;32m");
-            fprintf(ostream, "%s\033[0m\n", *match);
+            if((S_ISDIR(buf.st_mode))) fprintf(stdout, "\033[0;34m");
+            else fprintf(stdout, "\033[0;32m");
+            fprintf(stdout, "%s\033[0m\n", *match);
         }
-        if((S_ISDIR(buf.st_mode))) search_directory_r(parent, entry_path, target, ostream, err, num_matches, match, d, f);
+        if((S_ISDIR(buf.st_mode))) search_directory_r(parent, entry_path, target, stdout, err, num_matches, match, d, f);
     }
     closedir(dir);
 }
 
-int seek(char** args, FILE* istream, FILE* ostream) {
+int seek(char** args) {
     bool d = false, e = false, f = false, target_acquired = false;
     int rc = 0;
     char *target = NULL, *parent = NULL;
@@ -100,10 +100,10 @@ int seek(char** args, FILE* istream, FILE* ostream) {
     }
     int num_matches = 0;
     char* match = NULL;
-    if(target || parent) search_directory_r(parent, parent, target, ostream, &rc, &num_matches, &match, d, f);
+    if(target || parent) search_directory_r(parent, parent, target, stdout, &rc, &num_matches, &match, d, f);
     else fprintf(stderr, "ERROR: Invalid arguments\n");
     if(num_matches == 0 && (target || parent)) {
-        fprintf(ostream, "No matches!\n");
+        fprintf(stdout, "No matches!\n");
     }
     else if((num_matches == 1) && e) {
         struct stat buf;
@@ -117,13 +117,13 @@ int seek(char** args, FILE* istream, FILE* ostream) {
             FILE* file = fopen(shit2, "r");
             while(!feof(file)) {
                 fgets(shit2, 4096, file);
-                fprintf(ostream, "%s", shit2);
+                fprintf(stdout, "%s", shit2);
             }
-            fprintf(ostream, "\n");
+            fprintf(stdout, "\n");
         }
         else {
             char* args[] = {"hop", shit2, NULL};
-            if(hop(args, istream, ostream)) {
+            if(hop(args)) {
                 fprintf(stderr, "ERROR: Could not switch directory\n");
             }
         }

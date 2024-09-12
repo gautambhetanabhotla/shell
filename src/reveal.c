@@ -55,7 +55,7 @@ void print_dir(struct directory dir, bool l, bool a, FILE* ostream) {
     }
 }
 
-int reveal(char** args, FILE* istream, FILE* ostream) {
+int reveal(char** args) {
     long int blocks = 0;
     int blocksize = 0;
     bool l = false, a = false;
@@ -115,7 +115,7 @@ int reveal(char** args, FILE* istream, FILE* ostream) {
             if((S_ISLNK(statbuf.st_mode))) readlink(shit, dir.linkto, PATH_MAX);
             strcpy(dir.last_modified_time, ctime(&statbuf.st_mtime));
             dir.last_modified_time[strlen(dir.last_modified_time) - 1] = '\0';
-            print_dir(dir, l, a, ostream);
+            print_dir(dir, l, a, stdout);
             return 0;
         }
         return -1;
@@ -172,9 +172,9 @@ int reveal(char** args, FILE* istream, FILE* ostream) {
     }
     closedir(dir);
 
-    if(l) fprintf(ostream, "Total blocks allocated: %ld blocks of %d kB each\n", blocks, blocksize);
+    if(l) fprintf(stdout, "Total blocks allocated: %ld blocks of %d kB each\n", blocks, blocksize);
     qsort(directories, num, sizeof(struct directory), compare_directories);
-    for(int i = 0; i < num; i++) print_dir(directories[i], l, a, ostream);
+    for(int i = 0; i < num; i++) print_dir(directories[i], l, a, stdout);
 
     return 0;
 }

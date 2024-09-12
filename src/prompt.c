@@ -25,7 +25,7 @@
 #include <termios.h>
 
 char *HOME_DIRECTORY = NULL, *USERNAME = NULL, *HOSTNAME = NULL, *CURRENT_DIRECTORY = NULL;
-int (*USER_FUNCTIONS[])(char**, FILE*, FILE*) = {hop, exit_shell, Log, proclore, reveal, seek, activities, ping, fg, bg, neonate, iMan, NULL};
+int (*USER_FUNCTIONS[])(char**) = {hop, exit_shell, Log, proclore, reveal, seek, activities, ping, fg, bg, neonate, iMan, NULL};
 char* COMMAND_STRINGS[] = {"hop", "exit", "log", "proclore", "reveal", "seek", "activities", "ping", "fg", "bg", "neonate", "iMan", NULL};
 
 char* CURRENT_DIRECTORY_CONVERTED = NULL;
@@ -55,7 +55,7 @@ void prompt() {
 	printf("\e[0;31m%s@%s:%s %s $\e[0;37m ", USERNAME, HOSTNAME, CURRENT_DIRECTORY_CONVERTED, MOST_RECENT_FG_PROCESS);
     char* query = calloc(MAX_COMMAND_LENGTH + 2, sizeof(char));
     fgets(query, MAX_COMMAND_LENGTH + 1, stdin);
-    if(feof(stdin)) exit_shell(NULL, NULL, NULL);
+    if(feof(stdin)) exit_shell(NULL);
     if(query[0] == '\0' || query[1] == '\0') return;
     query[strlen(query) - 1] = '\0';
     #ifdef DEBUG
@@ -79,7 +79,7 @@ void prompt() {
     int j = 0;
     while(commands[j].string) {
         int save_stdin = dup(STDIN_FILENO), save_stdout = dup(STDOUT_FILENO);
-        FILE* istream = stdin, *ostream = stdout;
+        // FILE* istream = stdin, *ostream = stdout;
         char** args = get_args(commands[j].string, commands[j].background);
         if(commands[j].sending_pipe) {
             if(pipe(pipes[j])) {
@@ -97,7 +97,7 @@ void prompt() {
         }
         // istream = fdopen(STDIN_FILENO, "r");
         // ostream = fdopen(STDOUT_FILENO, "a");
-        execute(args, commands[j].background, istream, ostream);
+        execute(args, commands[j].background);
         dup2(save_stdin, STDIN_FILENO);
         dup2(save_stdout, STDOUT_FILENO);
         j++;
@@ -142,7 +142,7 @@ void init_shell() {
     tcgetattr(STDIN_FILENO, &ORIGINAL_TERM);
 }
 
-int exit_shell(char** args, FILE* istream, FILE* ostream) {
+int exit_shell(char** args) {
     save_log();
     free(HOME_DIRECTORY);
     free(CURRENT_DIRECTORY);
@@ -152,13 +152,28 @@ int exit_shell(char** args, FILE* istream, FILE* ostream) {
     exit(0);
 }
 
-void execute(char** args, bool background, FILE* istream, FILE* ostream) {
+void execute(char** args, bool background) {
     int i = 0;
     int save_stdin = dup(STDIN_FILENO), save_stdout = dup(STDOUT_FILENO);
     while(args[i]) {
-        if(strcmp(args[i], ">") == 0) ostream = fopen(args[i+1], "w");
-        else if(strcmp(args[i], ">>") == 0) ostream = fopen(args[i+1], "a");
-        else if(strcmp(args[i], "<") == 0) istream = fopen(args[i+1], "r");
+        if(strcmp(args[i], ">") == 0) {
+            if(!args[i+1]) {
+                fprintf(stderr, "Invalid redirection\n");
+                return;
+            }
+            dup2(STDOUT_FILENO, open(args[i+1], O_WRONLY | O_CREAT | O_TRUNC, 0644));
+        }
+        else if(strcmp(args[i], ">>") == 0) {
+            dup2(STDOUT_FILENO, open(args[i+1], O_WRONLY | O_APPEND | O_CREAT | O_TRUNC, 0644));
+        }
+        else if(strcmp(args[i], "<") == 0) {
+            int fd = open(args[i+1], O_RDONLY, 0644);
+            if(fd < 0) {
+                fprintf(stderr, "File does not exist\n");
+                return;
+            }
+            dup2(STDIN_FILENO, fd);
+        }
         else {
             i++;
             continue;
@@ -176,15 +191,16 @@ void execute(char** args, bool background, FILE* istream, FILE* ostream) {
     for(int i = 0; COMMAND_STRINGS[i]; i++) {
         if(strcmp(args[0], COMMAND_STRINGS[i]) == 0) {
             time(&t_start);
-            int rc = USER_FUNCTIONS[i](args, istream, ostream);
+            int rc = USER_FUNCTIONS[i](args);
+            dup2(save_stdin, STDIN_FILENO);
+            dup2(save_stdout, STDOUT_FILENO);
             time(&t_end);
             if(difftime(t_end, t_start) >= 2) {
                 snprintf(MOST_RECENT_FG_PROCESS, NAME_MAX, "%s: %d sec", args[0], (int)difftime(t_end, t_start));
             }
             else for(int i = 0; MOST_RECENT_FG_PROCESS[i]; i++) MOST_RECENT_FG_PROCESS[i] = '\0';
             if(rc) fprintf(stderr, "%s exited with status %d\n", COMMAND_STRINGS[i], rc);
-            dup2(save_stdin, STDIN_FILENO);
-            dup2(save_stdout, STDOUT_FILENO);
+            
             return;
         }
     }
@@ -221,7 +237,7 @@ void execute(char** args, bool background, FILE* istream, FILE* ostream) {
         dup2(save_stdout, STDOUT_FILENO);
         return;
     }
-    fclose(istream); fclose(ostream);
+    // fclose(istream); fclose(ostream);
     dup2(save_stdin, STDIN_FILENO);
     dup2(save_stdout, STDOUT_FILENO);
 }

@@ -5,7 +5,7 @@
 
 struct directory;
 
-int reveal(char** args, FILE* istream, FILE* ostream);
+int reveal(char** args);
 char* name_from_path(char* input);
 
 #endif

@@ -11,7 +11,7 @@
 
 extern struct sigaction act_sigchld;
 
-int ping(char** args, FILE* istream, FILE* ostream) {
+int ping(char** args) {
     if(args == NULL || args[0] == NULL || args[1] == NULL || args[2] == NULL) {
         fprintf(stderr, "Invalid usage of ping!\n");
         return -1;
@@ -30,7 +30,7 @@ void handle_sig_int() {
 
 void handle_sig_quit() {
     // ctrl d
-    exit_shell(NULL, NULL, NULL);
+    exit_shell(NULL);
 }
 
 void handle_sig_tstp() {

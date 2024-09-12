@@ -63,7 +63,7 @@ char* convert_path_back(char* input_string, bool free_input) {
     // return result2;
 }
 
-int hop(char** args, FILE* istream, FILE* ostream) {
+int hop(char** args) {
     char* buffer = calloc(PATH_MAX + 1, sizeof(char));
     strcpy(buffer, CURRENT_DIRECTORY);
     
@@ -83,7 +83,7 @@ int hop(char** args, FILE* istream, FILE* ostream) {
             }
             rc = chdir(path);
             getcwd(CURRENT_DIRECTORY, PATH_MAX);
-            fprintf(ostream, "%s\n", CURRENT_DIRECTORY);
+            printf("%s\n", CURRENT_DIRECTORY);
             free(path);
             if(rc) {
                 switch(errno) {

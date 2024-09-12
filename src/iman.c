@@ -8,7 +8,7 @@
 #include <netinet/in.h>
 #include <string.h>
 
-int iMan(char** args, FILE* istream, FILE* ostream) {
+int iMan(char** args) {
     if(args == NULL || args[1] == NULL) {
         fprintf(stderr, "Invalid usage of iMan\n");
         return -1;
@@ -45,7 +45,7 @@ int iMan(char** args, FILE* istream, FILE* ostream) {
     int n;
     while(n = recv(sockfd, response, sizeof(response) - 1, 0) > 0) {
         response[n] = '\0';
-        fprintf(ostream, "%s", response);
+        printf("%s", response);
     }
     if(n < 0) {
         fprintf(stderr, "Failed to receive response\n");

@@ -49,11 +49,11 @@ int print_process_data(int pid, FILE* ostream) {
     return rc;
 }
 
-int proclore(char** args, FILE* istream, FILE* ostream) {
+int proclore(char** args) {
     if(args[1] == NULL) {
-        return print_process_data(SHELL_PID, ostream);
+        return print_process_data(SHELL_PID, stdout);
     }
     else {
-        return print_process_data(atoi(args[1]), ostream);   
+        return print_process_data(atoi(args[1]), stdout);   
     }
 }

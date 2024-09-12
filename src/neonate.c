@@ -52,7 +52,7 @@ int most_recent_pid() {
     return result;
 }
 
-int neonate(char** args, FILE* istream, FILE* ostream) {
+int neonate(char** args) {
     int time_arg = 1;
     bool correct_args = false;
     for(int i = 1; i < 3; i++) {
@@ -80,9 +80,9 @@ int neonate(char** args, FILE* istream, FILE* ostream) {
         tv.tv_usec = 0;
 
         FD_ZERO(&readfds);
-        FD_SET(fileno(istream), &readfds);
+        FD_SET(fileno(stdin), &readfds);
 
-        int retval = select(fileno(istream) + 1, &readfds, NULL, NULL, &tv);
+        int retval = select(fileno(stdin) + 1, &readfds, NULL, NULL, &tv);
 
         if(retval == -1) {
             #ifdef DEBUG
@@ -91,17 +91,17 @@ int neonate(char** args, FILE* istream, FILE* ostream) {
             break;
         }
         else if(retval) {
-            if(fgetc(istream) == 'x') {
+            if(fgetc(stdin) == 'x') {
                 break;
             }
         }
         else {
-            fprintf(ostream, "%d\n", most_recent_pid());
-            fflush(ostream);
+            printf("%d\n", most_recent_pid());
+            fflush(stdout);
         }
     }
     disable_raw_mode(&ORIGINAL_TERM);
-    fprintf(ostream, "\n");
-    fflush(ostream);
+    fprintf(stdout, "\n");
+    fflush(stdout);
     return 0;
 }

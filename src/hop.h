@@ -6,7 +6,7 @@
 
 extern char* LAST_DIRECTORY;
 
-int hop(char** args, FILE* istream, FILE* ostream);
+int hop(char** args);
 char* convert_path_back(char* input_string, bool free_input);
 
 #endif

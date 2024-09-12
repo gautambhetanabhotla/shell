@@ -3,7 +3,7 @@
 
 #include <string.h>
 
-int activities(char** args, FILE* istream, FILE* ostream) {
+int activities(char** args) {
     char** shit100 = NULL;
     for(int pid = 1; pid < 10000000; pid++) {
         if(strings[pid]) {
@@ -15,7 +15,7 @@ int activities(char** args, FILE* istream, FILE* ostream) {
             int n = 3;
             while(n--) fscanf(status_file, "%s", p_status);
             fclose(status_file);
-            fprintf(ostream, "%d: %s - %s\n", pid, strings[pid], strcmp(p_status, "R") == 0 ? "Running" : (strcmp(p_status, "S") == 0 ? "Sleeping" : (strcmp(p_status, "T") == 0 ? "Stopped" : "Other")));
+            printf("%d: %s - %s\n", pid, strings[pid], strcmp(p_status, "R") == 0 ? "Running" : (strcmp(p_status, "S") == 0 ? "Sleeping" : (strcmp(p_status, "T") == 0 ? "Stopped" : "Other")));
         }
     }
 }
