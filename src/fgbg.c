@@ -17,6 +17,14 @@ int fg(char** args) {
     }
     // Get the terminal file descriptor
     int fd = fileno(stdin);
+    int shell_pgid = tcgetpgrp(fd);
+    
+    if(shell_pgid == -1) {
+        #ifdef DEBUG
+        perror("tcgetpgrp");
+        #endif
+        return -1;
+    }
 
     // Set the process group ID of the specified process
     if (tcsetpgrp(fd, pid) == -1) {
@@ -44,9 +52,9 @@ int fg(char** args) {
     }
 
     // Restore the terminal control to the shell
-    if (tcsetpgrp(fd, getpgrp()) == -1) {
+    if (tcsetpgrp(fd, shell_pgid) == -1) {
         #ifdef DEBUG
-        perror("tcsetpgrp");
+        perror("tcsetpgrp, restore");
         #endif
         return -1;
     }
