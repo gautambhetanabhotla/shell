@@ -25,8 +25,8 @@
 #include <termios.h>
 
 char *HOME_DIRECTORY = NULL, *USERNAME = NULL, *HOSTNAME = NULL, *CURRENT_DIRECTORY = NULL;
-int (*USER_FUNCTIONS[])(char**, FILE*, FILE*) = {hop, exit_shell, Log, proclore, reveal, seek, activities, ping, fg, bg, neonate, NULL};
-char* COMMAND_STRINGS[] = {"hop", "exit", "log", "proclore", "reveal", "seek", "activities", "ping", "fg", "bg", "neonate", NULL};
+int (*USER_FUNCTIONS[])(char**, FILE*, FILE*) = {hop, exit_shell, Log, proclore, reveal, seek, activities, ping, fg, bg, neonate, iMan, NULL};
+char* COMMAND_STRINGS[] = {"hop", "exit", "log", "proclore", "reveal", "seek", "activities", "ping", "fg", "bg", "neonate", "iMan", NULL};
 
 char* CURRENT_DIRECTORY_CONVERTED = NULL;
 int SHELL_PID;
@@ -152,57 +152,42 @@ int exit_shell(char** args, FILE* istream, FILE* ostream) {
     exit(0);
 }
 
-// void execute(char** args, bool background, FILE* istream, FILE* ostream) {
-//     time_t t_start, t_end;
-//     for(int i = 0; COMMAND_STRINGS[i]; i++) {
-//         if(strcmp(args[0], COMMAND_STRINGS[i]) == 0) {
-//             time(&t_start);
-//             // any_fg_process_running = true;
-//             int rc = USER_FUNCTIONS[i](args, istream, ostream);
-//             time(&t_end);
-//             // any_fg_process_running = false;
-//             if(difftime(t_end, t_start) >= 2) {
-//                 snprintf(MOST_RECENT_FG_PROCESS, NAME_MAX, "%s: %d sec", args[0], (int)difftime(t_end, t_start));
-//             }
-//             else for(int i = 0; MOST_RECENT_FG_PROCESS[i]; i++) MOST_RECENT_FG_PROCESS[i] = '\0';
-//             if(rc) fprintf(stderr, "%s exited with status %d\n", COMMAND_STRINGS[i], rc);
-//             return;
-//         }
-//     }
-//     int rc2 = fork();
-//     if(rc2 > 0) {
-//         int i = 0;
-//         while(args[i]) i++;
-//         int stat;
-//         time(&t_start);
-//         if(!background) FG_PID = rc2;
-//         if(!background) waitpid(rc2, &stat, WUNTRACED);
-//         else {
-//             printf("%d\n", rc2);
-//             strings[rc2] = strdup(args[0]);
-//         }
-//         time(&t_end);
-//         if(!background) FG_PID = 0;
-//         if(difftime(t_end, t_start) >= 2) {
-//             snprintf(MOST_RECENT_FG_PROCESS, NAME_MAX, "%s: %d sec", args[0], (int)difftime(t_end, t_start));
-//         }
-//         else for(int i = 0; MOST_RECENT_FG_PROCESS[i]; i++) MOST_RECENT_FG_PROCESS[i] = '\0';
-//     }
-//     else if(rc2 == 0) {
-//         if(execvp(args[0], args) != 0) {
-//             fprintf(stderr, "ERROR: Invalid system command \"%s\".\n", args[0]);
-//             exit(1);
-//         }
-//     }
-//     else {
-//         fprintf(stderr, "ERROR: Could not execute command.\n");
-//         return;
-//     }
-// }
-
 void execute(char** args, bool background, FILE* istream, FILE* ostream) {
+    int i = 0;
+    int save_stdin = dup(STDIN_FILENO), save_stdout = dup(STDOUT_FILENO);
+    while(args[i]) {
+        if(strcmp(args[i], ">") == 0) ostream = fopen(args[i+1], "w");
+        else if(strcmp(args[i], ">>") == 0) ostream = fopen(args[i+1], "a");
+        else if(strcmp(args[i], "<") == 0) istream = fopen(args[i+1], "r");
+        else {
+            i++;
+            continue;
+        }
+        int j = i;
+        while(args[j+2]) {
+            free(args[j]);
+            args[j] = args[j+2];
+            j++;
+        }
+        args[j] = args[j+2];
+        i++;
+    }
     time_t t_start, t_end;
-    if(strcmp(args[0], "exit") == 0) exit_shell(NULL, NULL, NULL);
+    for(int i = 0; COMMAND_STRINGS[i]; i++) {
+        if(strcmp(args[0], COMMAND_STRINGS[i]) == 0) {
+            time(&t_start);
+            int rc = USER_FUNCTIONS[i](args, istream, ostream);
+            time(&t_end);
+            if(difftime(t_end, t_start) >= 2) {
+                snprintf(MOST_RECENT_FG_PROCESS, NAME_MAX, "%s: %d sec", args[0], (int)difftime(t_end, t_start));
+            }
+            else for(int i = 0; MOST_RECENT_FG_PROCESS[i]; i++) MOST_RECENT_FG_PROCESS[i] = '\0';
+            if(rc) fprintf(stderr, "%s exited with status %d\n", COMMAND_STRINGS[i], rc);
+            dup2(save_stdin, STDIN_FILENO);
+            dup2(save_stdout, STDOUT_FILENO);
+            return;
+        }
+    }
     int rc2 = fork();
     if(rc2 > 0) {
         int i = 0;
@@ -221,41 +206,82 @@ void execute(char** args, bool background, FILE* istream, FILE* ostream) {
             snprintf(MOST_RECENT_FG_PROCESS, NAME_MAX, "%s: %d sec", args[0], (int)difftime(t_end, t_start));
         }
         else for(int i = 0; MOST_RECENT_FG_PROCESS[i]; i++) MOST_RECENT_FG_PROCESS[i] = '\0';
-        if(strcmp(args[0], "hop") == 0) {
-            char buf[PATH_MAX];
-            snprintf(buf, sizeof(buf), "%s/dirfile.txt", HOME_DIRECTORY);
-            FILE* dirfile = fopen(buf, "r");
-            fscanf(dirfile, "%s", CURRENT_DIRECTORY);
-            fclose(dirfile);
-            if(CURRENT_DIRECTORY_CONVERTED) (CURRENT_DIRECTORY_CONVERTED);
-            CURRENT_DIRECTORY_CONVERTED = convert_path(CURRENT_DIRECTORY, HOME_DIRECTORY, false);
-            chdir(CURRENT_DIRECTORY);
-        }
-        if(args[0] && args[1] && strcmp(args[0], "log") == 0 && strcmp(args[1], "purge") == 0) {
-            purge_log();
-        }
     }
     else if(rc2 == 0) {
-        for(int i = 0; COMMAND_STRINGS[i]; i++) {
-            if(strcmp(args[0], COMMAND_STRINGS[i]) == 0) {
-                time(&t_start);
-                int rc = USER_FUNCTIONS[i](args, istream, ostream);
-                time(&t_end);
-                if(difftime(t_end, t_start) >= 2) {
-                    snprintf(MOST_RECENT_FG_PROCESS, NAME_MAX, "%s: %d sec", args[0], (int)difftime(t_end, t_start));
-                }
-                else for(int i = 0; MOST_RECENT_FG_PROCESS[i]; i++) MOST_RECENT_FG_PROCESS[i] = '\0';
-                if(rc) fprintf(stderr, "%s exited with status %d\n", COMMAND_STRINGS[i], rc);
-                exit(rc);
-            }
-        }
         if(execvp(args[0], args) != 0) {
             fprintf(stderr, "ERROR: Invalid system command \"%s\".\n", args[0]);
+            dup2(save_stdin, STDIN_FILENO);
+            dup2(save_stdout, STDOUT_FILENO);
             exit(1);
         }
     }
     else {
         fprintf(stderr, "ERROR: Could not execute command.\n");
+        dup2(save_stdin, STDIN_FILENO);
+        dup2(save_stdout, STDOUT_FILENO);
         return;
     }
+    fclose(istream); fclose(ostream);
+    dup2(save_stdin, STDIN_FILENO);
+    dup2(save_stdout, STDOUT_FILENO);
 }
+
+// void execute(char** args, bool background, FILE* istream, FILE* ostream) {
+//     time_t t_start, t_end;
+//     if(strcmp(args[0], "exit") == 0) exit_shell(NULL, NULL, NULL);
+//     int rc2 = fork();
+//     if(rc2 > 0) {
+//         int i = 0;
+//         while(args[i]) i++;
+//         int stat;
+//         time(&t_start);
+//         if(!background) FG_PID = rc2;
+//         if(!background) waitpid(rc2, &stat, WUNTRACED);
+//         else {
+//             printf("%d\n", rc2);
+//             strings[rc2] = strdup(args[0]);
+//         }
+//         time(&t_end);
+//         if(!background) FG_PID = 0;
+//         if(difftime(t_end, t_start) >= 2) {
+//             snprintf(MOST_RECENT_FG_PROCESS, NAME_MAX, "%s: %d sec", args[0], (int)difftime(t_end, t_start));
+//         }
+//         else for(int i = 0; MOST_RECENT_FG_PROCESS[i]; i++) MOST_RECENT_FG_PROCESS[i] = '\0';
+//         if(strcmp(args[0], "hop") == 0) {
+//             char buf[PATH_MAX];
+//             snprintf(buf, sizeof(buf), "%s/dirfile.txt", HOME_DIRECTORY);
+//             FILE* dirfile = fopen(buf, "r");
+//             fscanf(dirfile, "%s", CURRENT_DIRECTORY);
+//             fclose(dirfile);
+//             if(CURRENT_DIRECTORY_CONVERTED) (CURRENT_DIRECTORY_CONVERTED);
+//             CURRENT_DIRECTORY_CONVERTED = convert_path(CURRENT_DIRECTORY, HOME_DIRECTORY, false);
+//             chdir(CURRENT_DIRECTORY);
+//         }
+//         if(args[0] && args[1] && strcmp(args[0], "log") == 0 && strcmp(args[1], "purge") == 0) {
+//             purge_log();
+//         }
+//     }
+//     else if(rc2 == 0) {
+//         for(int i = 0; COMMAND_STRINGS[i]; i++) {
+//             if(strcmp(args[0], COMMAND_STRINGS[i]) == 0) {
+//                 time(&t_start);
+//                 int rc = USER_FUNCTIONS[i](args, istream, ostream);
+//                 time(&t_end);
+//                 if(difftime(t_end, t_start) >= 2) {
+//                     snprintf(MOST_RECENT_FG_PROCESS, NAME_MAX, "%s: %d sec", args[0], (int)difftime(t_end, t_start));
+//                 }
+//                 else for(int i = 0; MOST_RECENT_FG_PROCESS[i]; i++) MOST_RECENT_FG_PROCESS[i] = '\0';
+//                 if(rc) fprintf(stderr, "%s exited with status %d\n", COMMAND_STRINGS[i], rc);
+//                 exit(rc);
+//             }
+//         }
+//         if(execvp(args[0], args) != 0) {
+//             fprintf(stderr, "ERROR: Invalid system command \"%s\".\n", args[0]);
+//             exit(1);
+//         }
+//     }
+//     else {
+//         fprintf(stderr, "ERROR: Could not execute command.\n");
+//         return;
+//     }
+// }
