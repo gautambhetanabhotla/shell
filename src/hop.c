@@ -1,5 +1,6 @@
 #include "hop.h"
 #include "prompt.h"
+#include "parser.h"
 
 #include <unistd.h>
 #include <string.h>
@@ -104,11 +105,11 @@ int hop(char** args) {
     if(LAST_DIRECTORY) strcpy(LAST_DIRECTORY, buffer);
     else LAST_DIRECTORY = strdup(buffer);
     getcwd(CURRENT_DIRECTORY, PATH_MAX);
-    char buf[PATH_MAX];
-    snprintf(buf, sizeof(buf), "%s/dirfile.txt", HOME_DIRECTORY);
-    FILE* dirfile = fopen(buf, "w");
-    fprintf(dirfile, "%s\n", CURRENT_DIRECTORY);
-    fclose(dirfile);
+    // char buf[PATH_MAX];
+    // snprintf(buf, sizeof(buf), "%s/dirfile.txt", HOME_DIRECTORY);
+    // FILE* dirfile = fopen(buf, "w");
+    // fprintf(dirfile, "%s\n", CURRENT_DIRECTORY);
+    // fclose(dirfile);
     // free(CURRENT_DIRECTORY_CONVERTED);
     CURRENT_DIRECTORY_CONVERTED = convert_path(CURRENT_DIRECTORY, HOME_DIRECTORY, false);
     return rc;

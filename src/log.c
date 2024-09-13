@@ -128,7 +128,7 @@ int Log(char** args) {
             strcpy(query, PAST_COMMANDS[indexTBE]);
 
             struct command* commands = separate_commands(query);
-            if(strstr(query, "log") == NULL) add_to_log(query);
+            if(strstr(query, "log ") == NULL) add_to_log(query);
             i = 0;
             while(commands[i].string != NULL) {
                 i++;
@@ -157,7 +157,7 @@ int Log(char** args) {
                 if(commands[j].receiving_pipe) {
                     istream = fdopen(pipes[j-1][0], "r");
                 }
-                execute(args, commands[j].background);
+                execute(commands[j], args, j, NULL);
                 j++;
             }
             for(j = 0; j < i; i++) {

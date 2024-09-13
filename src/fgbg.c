@@ -28,7 +28,8 @@ int fg(char** args) {
     FG_PID = pid;
     time_t t_start, t_end;
     time(&t_start);
-    if(waitpid(pid, &status, WUNTRACED) == -1) {
+    int rc;
+    while((rc = waitpid(pid, &status, WUNTRACED)) > 0) {
         #ifdef DEBUG
             perror("waitpid");
         #endif

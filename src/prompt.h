@@ -1,6 +1,8 @@
 #include <stdbool.h>
 #include <stdio.h>
 
+#include "parser.h"
+
 #ifndef PROMPT_H
 #define PROMPT_H
 
@@ -15,7 +17,7 @@ extern char MOST_RECENT_FG_PROCESS[];
 
 void prompt();
 void init_shell();
-void execute(char** args, bool background);
+void execute(struct command command, char** args, int number, int (*pipes)[2]);
 int exit_shell(char** args);
 
 #endif
