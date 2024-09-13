@@ -10,7 +10,7 @@
 
 struct sigaction act;
 
-char* strings[10000000] = {NULL};
+char* bg_process_strings[10000000] = {NULL};
 
 void sigchld_handler(int signo, siginfo_t* siginfo, void* context) {
 	if(signo == SIGCHLD) {
@@ -18,7 +18,7 @@ void sigchld_handler(int signo, siginfo_t* siginfo, void* context) {
 		pid_t pid;
 		char* name;
 		while((pid = waitpid(-1, &status, WNOHANG)) > 0) {
-			name = strings[pid];
+			name = bg_process_strings[pid];
 			if(WIFEXITED(status)) {
 				if(WEXITSTATUS(status) == 0) printf("%s exited normally (%d)\n", name, pid);
 				else printf("%s exited abnormally with status %d (%d)\n", name, WEXITSTATUS(status), pid);

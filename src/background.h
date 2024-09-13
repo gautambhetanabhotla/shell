@@ -5,6 +5,6 @@
 
 void sigchld_handler(int signo, siginfo_t* siginfo, void* ucontext);
 extern struct sigaction act;
-extern char* strings[];
+extern char* bg_process_strings[];
 
 #endif

@@ -9,3 +9,4 @@ sys
 .myshrc
 *.txt
 *.swp
+test-build/

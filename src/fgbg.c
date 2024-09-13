@@ -16,9 +16,9 @@ int fg(char** args) {
         return -1;
     }
     // Get the terminal file descriptor
-    int fd = fileno(stdin);
+    int fd = fileno(stdout);
     int shell_pgid = tcgetpgrp(fd);
-    
+
     if(shell_pgid == -1) {
         #ifdef DEBUG
         perror("tcgetpgrp");

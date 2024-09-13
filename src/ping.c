@@ -49,6 +49,6 @@ void set_handlers() {
     // sigaction(SIGCHLD, &act_sigchld, NULL);
 
     signal(SIGINT, handle_sig_int);
-    signal(SIGQUIT, handle_sig_quit);
-    signal(SIGTSTP, handle_sig_tstp);
+    // signal(SIGQUIT, handle_sig_quit);
+    // signal(SIGTSTP, handle_sig_tstp);
 }
