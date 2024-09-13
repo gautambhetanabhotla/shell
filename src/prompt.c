@@ -26,8 +26,10 @@
 #include <termios.h>
 
 char *HOME_DIRECTORY = NULL, *USERNAME = NULL, *HOSTNAME = NULL, *CURRENT_DIRECTORY = NULL;
-int (*USER_FUNCTIONS[])(char**) = {hop, exit_shell, Log, proclore, reveal, seek, activities, ping, fg, bg, neonate, iMan, alias, NULL};
-char* COMMAND_STRINGS[] = {"hop", "exit", "log", "proclore", "reveal", "seek", "activities", "ping", "fg", "bg", "neonate", "iMan", "alias", NULL};
+int (*CHILD_FUNCTIONS[])(char**) = {proclore, reveal, seek, activities, ping, fg, bg, neonate, iMan, NULL};
+char* CHILD_STRINGS[] = {"proclore", "reveal", "seek", "activities", "ping", "fg", "bg", "neonate", "iMan", NULL};
+int (*PARENT_FUNCTIONS[])(char**) = {hop, exit_shell, Log, alias, NULL};
+char* PARENT_STRINGS[] = {"hop", "exit", "log", "alias", NULL};
 
 char* CURRENT_DIRECTORY_CONVERTED = NULL;
 int SHELL_PID;
@@ -35,22 +37,29 @@ int SHELL_PID;
 char MOST_RECENT_FG_PROCESS[NAME_MAX];
 int FG_PID = 0; // 0 if no foreground process is currently running, its pid otherwise
 
-char* convert_path(char* input_string, char* home_dir, bool free_input) {
-    // Converts a general path to one relative to the home directory.
-    char* result = (char*) malloc((strlen(input_string) + 1) * sizeof(char));
-    if(strcmp(input_string, home_dir) == 0) {
-        strcpy(result, "~");
+bool is_child_command(char* str) {
+    bool result = false;
+    for(int i = 0; CHILD_STRINGS[i] != NULL; i++) {
+        if(strcmp(CHILD_STRINGS[i], str) == 0) {
+            result = true;
+            break;
+        }
     }
-    else if(strstr(input_string, home_dir) != NULL) {
-        strcpy(result, "~/");
-        strcat(result, input_string + strlen(home_dir) + 1);
-    }
-    else {
-        strcpy(result, input_string);
-    }
-    if(free_input) free(input_string);
     return result;
 }
+
+bool is_parent_command(char* str) {
+    bool result = false;
+    for(int i = 0; PARENT_STRINGS[i] != NULL; i++) {
+        if(strcmp(PARENT_STRINGS[i], str) == 0) {
+            result = true;
+            break;
+        }
+    }
+    return result;
+}
+
+
 
 void prompt() {
 	printf("\n\e[0;31m%s@%s:%s %s $\e[0;37m ", USERNAME, HOSTNAME, CURRENT_DIRECTORY_CONVERTED, MOST_RECENT_FG_PROCESS);
@@ -59,6 +68,7 @@ void prompt() {
     if(feof(stdin)) exit_shell(NULL);
     if(query[0] == '\0' || query[1] == '\0') return;
     query[strlen(query) - 1] = '\0';
+    query = replace(query, ALIASES, true);
     #ifdef DEBUG
         // printf("QUERY: %s\n", query);
     #endif
@@ -183,14 +193,17 @@ void set_redirections(char** args, int* save_stdin, int* save_stdout, int* fd) {
             i++;
             continue;
         }
-        int j = i;
-        while(args[j+2]) {
-            free(args[j]);
-            args[j] = args[j+2];
-            j++;
+    }
+    i = 0;
+    while(args[i]) {
+        if(strcmp(args[i], "<") == 0 || strcmp(args[i], ">>") == 0 || strcmp(args[i], ">") == 0) {
+            free(args[i]);
+            args[i] = NULL;
+            free(args[i+1]);
+            args[i+1] = NULL;
+            i += 2;
         }
-        args[j] = args[j+2];
-        i++;
+        else i++;
     }
 }
 
@@ -198,8 +211,8 @@ void set_redirections(char** args, int* save_stdin, int* save_stdout, int* fd) {
 //     int save_stdin, save_stdout, fd = -1;
 //     set_redirections(args, &save_stdin, &save_stdout, &fd);
 //     time_t t_start, t_end;
-//     for(int i = 0; COMMAND_STRINGS[i]; i++) {
-//         if(strcmp(args[0], COMMAND_STRINGS[i]) == 0) {
+//     for(int i = 0; CHILD_STRINGS[i]; i++) {
+//         if(strcmp(args[0], CHILD_STRINGS[i]) == 0) {
 //             time(&t_start);
 //             int rc = USER_FUNCTIONS[i](args);
 //             dup2(save_stdin, STDIN_FILENO);
@@ -210,7 +223,7 @@ void set_redirections(char** args, int* save_stdin, int* save_stdout, int* fd) {
 //                 snprintf(MOST_RECENT_FG_PROCESS, NAME_MAX, "%s: %d sec", args[0], (int)difftime(t_end, t_start));
 //             }
 //             else for(int i = 0; MOST_RECENT_FG_PROCESS[i]; i++) MOST_RECENT_FG_PROCESS[i] = '\0';
-//             if(rc) fprintf(stderr, "%s exited with status %d\n", COMMAND_STRINGS[i], rc);
+//             if(rc) fprintf(stderr, "%s exited with status %d\n", CHILD_STRINGS[i], rc);
             
 //             return;
 //         }
@@ -262,7 +275,21 @@ void execute(char** args, bool background) {
     int save_stdin, save_stdout, fd = -1;
     set_redirections(args, &save_stdin, &save_stdout, &fd);
     time_t t_start, t_end;
-    if(strcmp(args[0], "exit") == 0) exit_shell(NULL);
+    if(is_parent_command(args[0])) {
+        for(int i = 0; PARENT_STRINGS[i]; i++) {
+            if(strcmp(args[0], PARENT_STRINGS[i]) == 0) {
+                time(&t_start);
+                int rc = PARENT_FUNCTIONS[i](args);
+                time(&t_end);
+                if(difftime(t_end, t_start) >= 2) {
+                    snprintf(MOST_RECENT_FG_PROCESS, NAME_MAX, "%s: %d sec", args[0], (int)difftime(t_end, t_start));
+                }
+                else for(int i = 0; MOST_RECENT_FG_PROCESS[i]; i++) MOST_RECENT_FG_PROCESS[i] = '\0';
+                if(rc) fprintf(stderr, "%s exited with status %d\n", PARENT_STRINGS[i], rc);
+                return;
+            }
+        }
+    }
     int rc2 = fork();
     if(rc2 > 0) {
         int i = 0;
@@ -281,31 +308,18 @@ void execute(char** args, bool background) {
             snprintf(MOST_RECENT_FG_PROCESS, NAME_MAX, "%s: %d sec", args[0], (int)difftime(t_end, t_start));
         }
         else for(int i = 0; MOST_RECENT_FG_PROCESS[i]; i++) MOST_RECENT_FG_PROCESS[i] = '\0';
-        if(strcmp(args[0], "hop") == 0) {
-            char buf[PATH_MAX];
-            snprintf(buf, sizeof(buf), "%s/dirfile.txt", HOME_DIRECTORY);
-            FILE* dirfile = fopen(buf, "r");
-            fscanf(dirfile, "%s", CURRENT_DIRECTORY);
-            fclose(dirfile);
-            if(CURRENT_DIRECTORY_CONVERTED) (CURRENT_DIRECTORY_CONVERTED);
-            CURRENT_DIRECTORY_CONVERTED = convert_path(CURRENT_DIRECTORY, HOME_DIRECTORY, false);
-            chdir(CURRENT_DIRECTORY);
-        }
-        if(args[0] && args[1] && strcmp(args[0], "log") == 0 && strcmp(args[1], "purge") == 0) {
-            purge_log();
-        }
     }
     else if(rc2 == 0) {
-        for(int i = 0; COMMAND_STRINGS[i]; i++) {
-            if(strcmp(args[0], COMMAND_STRINGS[i]) == 0) {
+        for(int i = 0; CHILD_STRINGS[i]; i++) {
+            if(strcmp(args[0], CHILD_STRINGS[i]) == 0) {
                 time(&t_start);
-                int rc = USER_FUNCTIONS[i](args);
+                int rc = CHILD_FUNCTIONS[i](args);
                 time(&t_end);
                 if(difftime(t_end, t_start) >= 2) {
                     snprintf(MOST_RECENT_FG_PROCESS, NAME_MAX, "%s: %d sec", args[0], (int)difftime(t_end, t_start));
                 }
                 else for(int i = 0; MOST_RECENT_FG_PROCESS[i]; i++) MOST_RECENT_FG_PROCESS[i] = '\0';
-                if(rc) fprintf(stderr, "%s exited with status %d\n", COMMAND_STRINGS[i], rc);
+                if(rc) fprintf(stderr, "%s exited with status %d\n", CHILD_STRINGS[i], rc);
                 exit(rc);
             }
         }

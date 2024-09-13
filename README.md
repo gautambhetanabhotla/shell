@@ -35,3 +35,6 @@ Only tabs and spaces are considered whitespace characters.
 
 ## Spec 8
 - Executables won't be searched for, with the `-e` flag.
+
+## Spec 9
+- Aliases should be set in the format `alias xx = yy`. Note that spacing matters. Everything must be space-separated.

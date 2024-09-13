@@ -26,6 +26,23 @@ struct command* realloc_commands(struct command* input, int size) {
     return result;
 }
 
+char* convert_path(char* input_string, char* home_dir, bool free_input) {
+    // Converts a general path to one relative to the home directory.
+    char* result = (char*) malloc((strlen(input_string) + 1) * sizeof(char));
+    if(strcmp(input_string, home_dir) == 0) {
+        strcpy(result, "~");
+    }
+    else if(strstr(input_string, home_dir) != NULL) {
+        strcpy(result, "~/");
+        strcat(result, input_string + strlen(home_dir) + 1);
+    }
+    else {
+        strcpy(result, input_string);
+    }
+    if(free_input) free(input_string);
+    return result;
+}
+
 bool only_whitespace(char* str) {
     char* x = str;
     while(*x) {
@@ -139,13 +156,6 @@ char** get_args(char* input, bool background) {
         arg = __strtok_r(NULL, " ", &saveptr);
         i++;
     }
-    // if(background) {
-    //     args = realloc(args, sizeof(char*) * (i + 1));
-    //     args[i] = (char*) calloc(sizeof(char) * 2, sizeof(char));
-    //     strcpy(args[i], "&"); // based on what exec() calls assume background
-    //     // arg = __strtok_r(NULL, " ", &saveptr);
-    //     i++;
-    // }
     args = realloc(args, sizeof(char*) * (i + 1));
     args[i] = NULL;
 

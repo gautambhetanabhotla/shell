@@ -15,7 +15,7 @@ char* replace(char* input, struct Alias* aliases, bool free_input) {
     char *l, *r;
     l = str;
     int i = 0;
-    while(aliases[i].name && aliases[i].replacement) {
+    while(aliases && aliases[i].name && aliases[i].replacement) {
         strcpy(str, input);
         r = strstr(str, aliases[i].name);
         while(r != NULL) {
@@ -54,7 +54,21 @@ void purge_aliases() {
 }
 
 int alias(char** args) {
-    if(args == NULL || args[0] == NULL || args[1] == NULL || args[2] == NULL || args[3] == NULL || (strcmp(args[2], "=") != 0)) {
+    if(args == NULL || args[0] == NULL) {
+        fprintf(stderr, "Invalid arguments!\n");
+        return -1;
+    }
+    if(args[1] == NULL) {
+        for(int i = 0; i < N_ALIASES; i++) {
+            printf("%s: %s\n", ALIASES[i].name, ALIASES[i].replacement);
+        }
+        return 0;
+    }
+    if(args[2] == NULL || args[3] == NULL) {
+        fprintf(stderr, "Invalid arguments!\n");
+        return -1;
+    }
+    if(args[2] && (strcmp(args[2], "=") != 0)) {
         fprintf(stderr, "Invalid arguments!\n");
         return -1;
     }
@@ -66,7 +80,9 @@ int alias(char** args) {
         i++;
     }
     add_alias(args[1], replacement);
+    #ifdef DEBUG
+        printf("Added alias: %s = %s\n", args[1], replacement);
+    #endif
     free(replacement);
-    
     return 0;
 }

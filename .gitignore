@@ -3,7 +3,6 @@
 .vscode/
 build/
 test*
-test.c
 sys
 .fuse*
 .myshrc

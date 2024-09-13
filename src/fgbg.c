@@ -1,9 +1,12 @@
 #include "fgbg.h"
+#include "prompt.h"
 
 #include <signal.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <wait.h>
+#include <time.h>
+#include <linux/limits.h>
 
 int fg(char** args) {
     if(args == NULL || args[1] == NULL) {
@@ -15,49 +18,28 @@ int fg(char** args) {
         fprintf(stderr, "Invalid PID\n");
         return -1;
     }
-    // Get the terminal file descriptor
-    int fd = fileno(stdout);
-    int shell_pgid = tcgetpgrp(fd);
-
-    if(shell_pgid == -1) {
+    if(kill(pid, SIGCONT) == -1) {
         #ifdef DEBUG
-        perror("tcgetpgrp");
+            perror("kill(SIGCONT)");
         #endif
         return -1;
     }
-
-    // Set the process group ID of the specified process
-    if (tcsetpgrp(fd, pid) == -1) {
-        #ifdef DEBUG
-        perror("tcsetpgrp");
-        #endif
-        return -1;
-    }
-
-    // Send SIGCONT to the process to continue its execution
-    if (kill(pid, SIGCONT) == -1) {
-        #ifdef DEBUG
-        perror("kill(SIGCONT)");
-        #endif
-        return -1;
-    }
-
-    // Wait for the process to change state
     int status;
-    if (waitpid(pid, &status, WUNTRACED) == -1) {
+    FG_PID = pid;
+    time_t t_start, t_end;
+    time(&t_start);
+    if(waitpid(pid, &status, WUNTRACED) == -1) {
         #ifdef DEBUG
-        perror("waitpid");
+            perror("waitpid");
         #endif
         return -1;
     }
-
-    // Restore the terminal control to the shell
-    if (tcsetpgrp(fd, shell_pgid) == -1) {
-        #ifdef DEBUG
-        perror("tcsetpgrp, restore");
-        #endif
-        return -1;
+    FG_PID = 0;
+    time(&t_end);
+    if(difftime(t_end, t_start) >= 2) {
+        snprintf(MOST_RECENT_FG_PROCESS, NAME_MAX, "%s: %d sec", args[0], (int)difftime(t_end, t_start));
     }
+    else for(int i = 0; MOST_RECENT_FG_PROCESS[i]; i++) MOST_RECENT_FG_PROCESS[i] = '\0';
     return 0;
 }
 
