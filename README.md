@@ -37,4 +37,24 @@ Only tabs and spaces are considered whitespace characters.
 - Executables won't be searched for, with the `-e` flag.
 
 ## Spec 9
+- Dynamic aliasing is supported.
 - Aliases should be set in the format `alias xx = yy`. Note that spacing matters. Everything must be space-separated.
+- Typing `alias` will show a list of all aliases made so far.
+- `.myshrc` works like a typical run-commands file for any shell, it will run all the commands present in it on startup.
+
+## Spec 10, 11, 12
+- Will work as expected for valid commands, but for commands involving `<`, `>` and `>>`, they must be separated by spaces.
+
+## Spec 13
+- Running processes are printed in ascending order of their PIDs.
+
+## Spec 14
+- None.
+
+## Spec 15
+
+## Spec 16
+- None.
+
+## Spec 17
+- None.

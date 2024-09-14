@@ -26,11 +26,10 @@ int ping(char** args) {
 void handle_sig_int() {
     // ctrl c
     // fprintf(stderr, "PID %d received SIGINT - Shell PID = %d\n", getpid(), SHELL_PID);
-}
-
-void handle_sig_quit() {
-    // ctrl d
-    exit_shell(NULL);
+    if(FG_PID) {
+        kill(FG_PID, SIGINT);
+        FG_PID = 0;
+    }
 }
 
 void handle_sig_tstp() {

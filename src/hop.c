@@ -16,23 +16,23 @@ char* convert_path_back(char* input_string, bool free_input) {
     // returns the path after expanding '~', '-'
 
     if(!input_string) return NULL;
-    char* result = NULL;
+    char* result = calloc(PATH_MAX, sizeof(char));
     if(strstr(input_string, "~") != NULL) {
         if(input_string[0] != '~') {
             if(free_input && input_string) free(input_string);
-            return result;
+            return NULL;
         }
         else {
-            result = malloc(strlen(HOME_DIRECTORY) + strlen(input_string));
             sprintf(result, "%s/%s", HOME_DIRECTORY, input_string + 2);
         }
     }
     else {
         if(strlen(input_string) == 1 && input_string[0] == '-') {
-            if(LAST_DIRECTORY) result = strdup(LAST_DIRECTORY);
+            if(LAST_DIRECTORY) strcpy(result, LAST_DIRECTORY);
+            else return NULL;
         }
         else {
-            result = strdup(input_string);
+            strcpy(result, input_string);
         }
     }
     return result;

@@ -60,6 +60,25 @@ bool is_parent_command(char* str) {
     return result;
 }
 
+void fix_pipes(struct command* commands, int* err) {
+    int i = 0;
+    while(commands[i].string != NULL) {
+        i++;
+    }
+    if(commands && commands[i-1].sending_pipe == true) {
+        fprintf(stderr, "Invalid usage of pipe!\n");
+        return;
+    }
+    else if(commands && commands[0].receiving_pipe == true) {
+        fprintf(stderr, "Invalid usage of pipe!\n");
+        return;
+    }
+    for(int j = 0; j < i; j++) {
+        if(commands[j].sending_pipe && j < i) commands[j+1].receiving_pipe = true;
+        if(j > 0 && commands[j].receiving_pipe) commands[j-1].sending_pipe = true;
+    }
+}
+
 void prompt() {
 	printf("\n\e[0;31m%s@%s:%s %s $\e[0;37m ", USERNAME, HOSTNAME, CURRENT_DIRECTORY_CONVERTED, MOST_RECENT_FG_PROCESS);
     char* query = calloc(MAX_COMMAND_LENGTH + 2, sizeof(char));
@@ -77,22 +96,12 @@ void prompt() {
     while(commands[i].string != NULL) {
         i++;
     }
-    if(commands && commands[i-1].sending_pipe == true) {
-        fprintf(stderr, "Invalid usage of pipe!\n");
-        return;
-    }
-    else if(commands && commands[0].receiving_pipe == true) {
-        fprintf(stderr, "Invalid usage of pipe!\n");
-        return;
-    }
+    int err = 0;
+    fix_pipes(commands, &err);
+    if(err) return;
     int pipes[i][2];
     i = 0;
     int j = 0;
-    for(j = 0; j < i; j++) {
-        if(commands[j].sending_pipe && j < i) commands[j+1].receiving_pipe = true;
-        if(j > 0 && commands[j].receiving_pipe) commands[j-1].sending_pipe = true;
-    }
-    j = 0;
     while(commands[j].string) {
         char** args = get_args(commands[j].string, commands[j].background);
         execute(commands[j], args, j, pipes);
@@ -131,6 +140,35 @@ void init_shell() {
     sigaction(SIGCHLD, &act, NULL);
 
     tcgetattr(STDIN_FILENO, &ORIGINAL_TERM);
+    // ORIGINAL_TERM.c_lflag |= ISIG;
+    // tcsetattr(STDIN_FILENO, TCSAFLUSH, &ORIGINAL_TERM);
+
+    FILE* rcfile = fopen(".myshrc", "r");
+    if(rcfile) {
+        while(!feof(rcfile)) {
+            char* query = calloc(MAX_COMMAND_LENGTH, sizeof(char));
+            fgets(query, MAX_COMMAND_LENGTH, rcfile);
+            query[strlen(query) - 1] = '\0';
+            query = replace(query, ALIASES, true);
+            struct command* commands = separate_commands(query);
+            if(strstr(query, "log ") == NULL) add_to_log(query);
+            int i = 0;
+            while(commands[i].string != NULL) {
+                i++;
+            }
+            int err = 0;
+            fix_pipes(commands, &err);
+            if(err) return;
+            int pipes[i][2];
+            i = 0;
+            int j = 0;
+            while(commands[j].string) {
+                char** args = get_args(commands[j].string, commands[j].background);
+                execute(commands[j], args, j, pipes);
+                j++;
+            }
+        }
+    }
 }
 
 int exit_shell(char** args) {
@@ -182,8 +220,8 @@ void set_redirections(char** args, int* save_stdin, int* save_stdout) {
         }
         else i++;
     }
-    close(fd_in);
-    close(fd_out);
+    // close(fd_in);
+    // close(fd_out);
 }
 
 void set_pipes(struct command command, int number, int (*pipes)[2]) {
@@ -312,8 +350,8 @@ void execute(struct command command, char** args, int number, int (*pipes)[2]) {
             else for(int i = 0; MOST_RECENT_FG_PROCESS[i]; i++) MOST_RECENT_FG_PROCESS[i] = '\0';
         }
         else if(rc == 0) {
-            // setpgrp();
-            if(!command.receiving_pipe) close(STDIN_FILENO);
+            if(command.background) setpgrp();
+            if(!command.receiving_pipe && command.background) close(STDIN_FILENO);
             for(int i = 0; CHILD_STRINGS[i]; i++) {
                 if(strcmp(args[0], CHILD_STRINGS[i]) == 0) {
                     
