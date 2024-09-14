@@ -26,14 +26,15 @@ int fg(char** args) {
     }
     int status;
     FG_PID = pid;
+    setpgid(pid, SHELL_PID);
     time_t t_start, t_end;
     time(&t_start);
     int rc;
-    while((rc = waitpid(pid, &status, WUNTRACED)) > 0) {
-        #ifdef DEBUG
-            perror("waitpid");
-        #endif
-        return -1;
+    if((rc = waitpid(pid, &status, WUNTRACED)) > 0) {
+        // #ifdef DEBUG
+        //     perror("waitpid");
+        // #endif
+        // return -1;
     }
     FG_PID = 0;
     time(&t_end);

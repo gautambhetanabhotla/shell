@@ -27,15 +27,16 @@
 #include <sys/types.h>
 
 char *HOME_DIRECTORY = NULL, *USERNAME = NULL, *HOSTNAME = NULL, *CURRENT_DIRECTORY = NULL;
-int (*CHILD_FUNCTIONS[])(char**) = {proclore, reveal, seek, activities, ping, fg, bg, neonate, iMan, NULL};
-char* CHILD_STRINGS[] = {"proclore", "reveal", "seek", "activities", "ping", "fg", "bg", "neonate", "iMan", NULL};
-int (*PARENT_FUNCTIONS[])(char**) = {hop, exit_shell, Log, alias, NULL};
-char* PARENT_STRINGS[] = {"hop", "exit", "log", "alias", NULL};
+int (*CHILD_FUNCTIONS[])(char**) = {proclore, reveal, seek, activities, ping, neonate, iMan, NULL};
+char* CHILD_STRINGS[] = {"proclore", "reveal", "seek", "activities", "ping", "neonate", "iMan", NULL};
+int (*PARENT_FUNCTIONS[])(char**) = {hop, exit_shell, Log, alias, fg, bg, NULL};
+char* PARENT_STRINGS[] = {"hop", "exit", "log", "alias", "fg", "bg", NULL};
 
 char* CURRENT_DIRECTORY_CONVERTED = NULL;
 int SHELL_PID;
 
 char MOST_RECENT_FG_PROCESS[NAME_MAX];
+char CURRENT_RUNNING_FG_PROCESS[NAME_MAX];
 int FG_PID = 0; // 0 if no foreground process is currently running, its pid otherwise
 
 bool is_child_command(char* str) {
@@ -178,6 +179,14 @@ int exit_shell(char** args) {
     free(CURRENT_DIRECTORY_CONVERTED);
     free(USERNAME);
     free(HOSTNAME);
+    printf("\n");
+    for(int i = 1; i < 999999; i++) {
+        if(bg_process_strings[i]) {
+            kill(i, SIGTERM);
+            // free(bg_process_strings[i]);
+            // bg_process_strings[i] = NULL;
+        }
+    }
     exit(0);
 }
 
@@ -311,14 +320,6 @@ void execute(struct command command, char** args, int number, int (*pipes)[2]) {
                 time(&t_start);
                 int rc = PARENT_FUNCTIONS[i](args);
                 time(&t_end);
-                if(command.sending_pipe) {
-                    dup2(save_stdout, STDOUT_FILENO);
-                    close(save_stdout);
-                }
-                if(command.receiving_pipe) {
-                    dup2(save_stdin, STDIN_FILENO);
-                    close(save_stdin);
-                }
                 if(difftime(t_end, t_start) >= 2) {
                     snprintf(MOST_RECENT_FG_PROCESS, NAME_MAX, "%s: %d sec", args[0], (int)difftime(t_end, t_start));
                 }
@@ -350,48 +351,30 @@ void execute(struct command command, char** args, int number, int (*pipes)[2]) {
             else for(int i = 0; MOST_RECENT_FG_PROCESS[i]; i++) MOST_RECENT_FG_PROCESS[i] = '\0';
         }
         else if(rc == 0) {
-            if(command.background) setpgrp();
-            if(!command.receiving_pipe && command.background) close(STDIN_FILENO);
+            FG_PID = 0;
+            if(command.background) {
+                // tcsetpgrp(STDIN_FILENO, getpid());
+                // tcsetpgrp(STDOUT_FILENO, getpid());
+                // tcsetpgrp(STDERR_FILENO, getpid());
+                setpgrp();
+            }
+            if(!command.receiving_pipe && command.background) {
+                close(STDIN_FILENO);
+            }
             for(int i = 0; CHILD_STRINGS[i]; i++) {
                 if(strcmp(args[0], CHILD_STRINGS[i]) == 0) {
-                    
-                    time(&t_start);
                     int rc = CHILD_FUNCTIONS[i](args);
-                    time(&t_end);
-                    
-                    if(difftime(t_end, t_start) >= 2) {
-                        snprintf(MOST_RECENT_FG_PROCESS, NAME_MAX, "%s: %d sec", args[0], (int)difftime(t_end, t_start));
-                    }
-                    else for(int i = 0; MOST_RECENT_FG_PROCESS[i]; i++) MOST_RECENT_FG_PROCESS[i] = '\0';
                     if(rc) fprintf(stderr, "%s exited with status %d\n", CHILD_STRINGS[i], rc);
                     exit(rc);
                 }
             }
             if(execvp(args[0], args) != 0) {
                 fprintf(stderr, "ERROR: Invalid system command \"%s\".\n", args[0]);
-                if(command.sending_pipe) {
-                    dup2(save_stdout, STDOUT_FILENO);
-                    close(save_stdout);
-                }
-                if(command.receiving_pipe) {
-                    dup2(save_stdin, STDIN_FILENO);
-                    close(save_stdin);
-                }
                 exit(1);
-            }
-            
+            }  
         }
         else {
             fprintf(stderr, "ERROR: Could not execute command.\n");
-            if(command.sending_pipe) {
-                dup2(save_stdout, STDOUT_FILENO);
-                close(save_stdout);
-            }
-            if(command.receiving_pipe) {
-                dup2(save_stdin, STDIN_FILENO);
-                close(save_stdin);
-            }
-            return;
         }
     }
     dup2(save_stdin, STDIN_FILENO);

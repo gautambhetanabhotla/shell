@@ -34,11 +34,19 @@ void handle_sig_int() {
 
 void handle_sig_tstp() {
     // ctrl z
+    // fprintf(stderr, "RECEIVED SIG_TSTP\n");
     if(FG_PID) {
-        // kill(FG_PID, SIGTSTP);
+        bg_process_strings[FG_PID] = "hlo";
         setpgid(FG_PID, FG_PID);
-        tcsetpgrp(0, FG_PID);
-        FG_PID = 0;
+        // tcsetpgrp(STDIN_FILENO, FG_PID);
+        // tcsetpgrp(STDOUT_FILENO, FG_PID);
+        // tcsetpgrp(STDERR_FILENO, FG_PID);
+        kill(FG_PID, SIGTSTP);
+    }
+    else {
+        // tcsetpgrp(STDIN_FILENO, FG_PID);
+        // tcsetpgrp(STDOUT_FILENO, FG_PID);
+        // tcsetpgrp(STDERR_FILENO, FG_PID);
     }
 }
 
@@ -49,5 +57,5 @@ void set_handlers() {
 
     signal(SIGINT, handle_sig_int);
     // signal(SIGQUIT, handle_sig_quit);
-    // signal(SIGTSTP, handle_sig_tstp);
+    signal(SIGTSTP, handle_sig_tstp);
 }

@@ -38,7 +38,7 @@ Only tabs and spaces are considered whitespace characters.
 
 ## Spec 9
 - Dynamic aliasing is supported.
-- Aliases should be set in the format `alias xx = yy`. Note that spacing matters. Everything must be space-separated.
+- Aliases should be set in the format `alias xx = yy`. Note that spacing matters. Everything must be space-separated. `xx` must be a single word, `yy` can be multiple.
 - Typing `alias` will show a list of all aliases made so far.
 - `.myshrc` works like a typical run-commands file for any shell, it will run all the commands present in it on startup.
 
@@ -52,6 +52,7 @@ Only tabs and spaces are considered whitespace characters.
 - None.
 
 ## Spec 15
+- None.
 
 ## Spec 16
 - None.
